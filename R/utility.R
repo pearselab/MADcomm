@@ -21,7 +21,7 @@
   if(!is.numeric(numX)){
     numX <- as.numeric(x)
     if(length(numX[is.na(numX)]) > 0){
-      stop()
+      stop("Error: NAs in data")
     }
   }
   
@@ -30,7 +30,7 @@
   if(length(numX[numX < 0]) > 0){
     # Then we check if only -1's and 0's exist in table. We stop otherwise.
     if(length(numX[numX !=0 && numX != -1]) > 0){
-      stop()
+      stop("Error: non-presence/absence data in pres/abs input")
     }
     presence = TRUE
     
