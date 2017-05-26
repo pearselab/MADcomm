@@ -2,6 +2,33 @@
 # ADD DOIs ##########
 #####################
 
+#' @importFrom fulltext ft_get_si
+
+.get.addresses <- function (...){
+# Here is my first thought to conqure this. It saves a bunch of function calls, at the cost of individual customizability.
+# Places all addresses in a single list (or should it be a vector?) Will be accessed and processed by another funciton
+# Each quote could have corresponding data for alterations that would need to be made to the csv or table
+    
+    # If possible, I'd include a webpage search function here that just extracts all the links from the google doc,
+    # - or server, if we want to invest in one. Might be too complicated, though. It would look something like this:
+    
+    links <- array(list(link = "http://esapubs.org/archive/ecol/E088/161/species_list.csv", format = "long", type = "count"))
+    links <- cbind(names, list(link = "https://ndownloader.figshare.com/files/5619456", format = "long", type = "count"))
+    # The list would go on, with the link first, the "format" is what form the table is currently in and the type is count
+    # - vs presence/absense
+    
+    return(links)
+}
+
+# Option 2 is the manual version that looks very similar to downloads.R in natb, taking one publication at a time
+# and creating a function call for it. I'll do a few here and for you to see if I'm doing it right.
+
+.adler.2007 <- function(...){
+    data <- read.csv(ft_get_si()) #No progress on this.
+
+}
+
+
 
 .helmus.2013 <- function(...){
     library(pez) # This isn't how we declare packages in 'real'
