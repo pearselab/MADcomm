@@ -1,19 +1,12 @@
-#' @import reshape2
-
+#' Takes a matrix of data for a species, checks if its numeric, then puts the table into a long-format dataframe
+#'
+#' @param x a matrix of data, generally species in the columns and sites in the row
+#' @parm row.metadata metadata for the sites; in long format, it will be stored in each row with with the site pertaining to the data
+#' @param col.metadata metadata for the species; will be stored in every 'n'th row, where 'n' is the number of rows in the original table
+#' @parma total.metadata metadata for table; will include publishing information
+#' @importFrom reshape2 melt
+#' @return data set in long format, with all metadata included
 .matrix.melt <- function(x, row.metadata, col.metadata, total.metadata){
-  # Takes a matrix of data for a species, checks if its numeric, then puts
-  #  the table into a long-format dataframe
-  
-  # Args:
-  #  x: a matrix of data, generally species in the columns and sites in the row
-  #  row.metadata: metadata for the sites; in long format, it will be stored in each row with
-  #    with the site pertaining to the data
-  #  col.metadata: metadata for the species; will be stored in every 'n'th row, where 'n' is
-  #    the number of rows in the original table
-  #  total.metadata: metadata for table; will include publishing information
-  #
-  # Return: a data set in long format, with all metadata included
-  
   # Check that 'x' is a numeric matrix with colnames and rownames. Attempts to convert to numeric
   #  if possible. Otherwise, will stop
   numX <- x
@@ -34,7 +27,6 @@
   }
   # (optional, for later) check the meta-data is intact when missing(metadata)==FALSE
   
-  # Collapse the matrix down into long-format data using reshape2::melt
   long.format <- melt(numX)[c(2,1,3)]
   
   # Add the meta-data in intelligently
