@@ -1,19 +1,12 @@
-#' @import picante
-
+#' Takes a matrix of data for a species, checks if its numeric, then puts the table into a long-format dataframe
+#'
+#' @param x a matrix of data, generally species in the columns and sites in the row
+#' @parm row.metadata metadata for the sites; in long format, it will be stored in each row with with the site pertaining to the data
+#' @param col.metadata metadata for the species; will be stored in every 'n'th row, where 'n' is the number of rows in the original table
+#' @parma total.metadata metadata for table; will include publishing information
+#' @importFrom reshape2 melt
+#' @return data set in long format, with all metadata included
 .matrix.melt <- function(x, row.metadata, col.metadata, total.metadata){
-  # Takes a matrix of data for a species, checks if its numeric, then puts
-  #  the table into a long-format dataframe
-  
-  # Args:
-  #  x: a matrix of data, generally species in the columns and sites in the row
-  #  row.metadata: metadata for the sites; in long format, it will be stored in each row with
-  #    with the site pertaining to the data
-  #  col.metadata: metadata for the species; will be stored in every 'n'th row, where 'n' is
-  #    the number of rows in the original table
-  #  total.metadata: metadata for table; will include publishing information
-  #
-  # Return: a data set in long format, with all metadata included
-  
   # Check that 'x' is a numeric matrix with colnames and rownames. Attempts to convert to numeric
   #  if possible. Otherwise, will stop
   numX <- x
@@ -21,34 +14,22 @@
   if(!is.numeric(numX)){
     numX <- as.numeric(x)
     if(length(numX[is.na(numX)]) > 0){
-      stop("Error: NAs in data")
+      stop("Error: NAs in data. Data in table might not be numeric")
     }
   }
   
   # check if presence/absense matrix by first checking if negatives exist in matrix
-  presence <- FALSE
   if(length(numX[numX < 0]) > 0){
-    # Then we check if only -1's and 0's exist in table. We stop otherwise.
+    # Then we check if only -1's and 0's exist in table; will stop otherwise.
     if(length(numX[numX !=0 && numX != -1]) > 0){
       stop("Error: non-presence/absence data in pres/abs input")
     }
-    presence = TRUE
-    
-    #convert all -1's to 1's for matrix2sample to work
-    numX[numX == -1] = 1
   }
   # (optional, for later) check the meta-data is intact when missing(metadata)==FALSE
   
-  # Collapse the matrix down into long-format data
-  # - picante::matrix2sample did not understand negative values, and consequently gave garbage back
-  long.format <- matrix2sample(numX)
-  
-  if(presence){
-    long.format$abund[long.format$abund == 1] <- -1
-  }
+  long.format <- melt(numX)[c(2,1,3)]
   
   # Add the meta-data in intelligently
-  
   
   #Cleanup and return
   return(long.format)
