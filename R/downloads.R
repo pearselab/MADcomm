@@ -32,7 +32,7 @@
 
 .anderson.2011 <- function(...){
     data <- read.csv("https://ndownloader.figshare.com/files/5619462")
-    data <- data[order(data$species), c(3, 1, 2, 4)
+    data <- data[order(data$species), c(3, 1, 2, 4)]
     return (data)
 }
 
@@ -42,6 +42,19 @@
     
     #contains location and cattle count but no corresponding species
     cattle.count <- read.csv("https://ndownloader.figshare.com/files/5626713")
+}
+
+# Best approach so far, mainly due to fact that table was already in long format
+.Lynch.2013 <- function(...){
+    full.table <- read.csv("http://esapubs.org/archive/ecol/E094/243/Antarctic_Site_Inventory_census_data_1994_2012.csv")
+    data <- full.table[c(6,1,9)]
+    
+    # Compacts remaining unused columns into one column as one big string per entry
+    meta.data <- full.table[-c(6,1,9)]
+    meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), "=", as.character(meta.data[y,]), ", ")))})
+    data$metadata <- meta.data
+    
+    return(data)
 }
 
 
