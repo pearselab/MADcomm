@@ -35,6 +35,19 @@
   return(long.format)
 }
 
+# Takes a data already in long format that will be converted to a string of metadata. Each row will be a single string, and the
+# function will return the list of these strings
+#
+# @param data a dataframe exclusively containing the columns of metadata
+# @return a list of metadata strings
+.make.metadata <- function(data){
+  sapply(1:nrow(data), function(y) {
+    char.list <- c(rbind(colnames(data), "=", as.character(data[y,]), ", "))
+    char.list <- head(char.list, -1)
+    metadata <- paste(char.list, collapse="")
+    return(metadata)
+  })
+}
 
 # Unzips a file from a downloaded zip file
 # param file name of file to be extracted from zip
