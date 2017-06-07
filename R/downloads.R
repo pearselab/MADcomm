@@ -4,30 +4,37 @@
 
 #' @importFrom fulltext ft_get_si
 
-.get.addresses <- function (...){
-# Here is my first thought to conquer this. It saves a bunch of function calls, at the cost of individual customizability.
-# Places all addresses in a single list (or should it be a vector?) Will be accessed and processed by another funciton
-# Each quote could have corresponding data for alterations that would need to be made to the csv or table
-    
-    # If possible, I'd include a webpage search function here that just extracts all the links from the google doc,
-    # - or server, if we want to invest in one. Might be too complicated, though. It would look something like this:
-    
-    links <- array(list(link = "http://esapubs.org/archive/ecol/E088/161/species_list.csv", format = "long", type = "count"))
-    links <- cbind(names, list(link = "https://ndownloader.figshare.com/files/5619456", format = "long", type = "count"))
-    # The list would go on, with the link first, the "format" is what form the table is currently in and the type is count
-    # - vs presence/absense
-    
-    return(links)
-}
-
-# Option 2 is the manual version that looks very similar to downloads.R in natb, taking one publication at a time
-# and creating a function call for it. I'll do a few here and for you to see if I'm doing it right.
-
-# the location data is incredibly hard to follow. Couldn't find correlation to the species count. Just took species count.
 .adler.2007 <- function(...){
-    data <- read.csv("http://esapubs.org/archive/ecol/E088/161/species_list.csv")[c(1,3,2)]
-    
-    return(data)
+  data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
+  metadata <- paste("(", data[,5], ",", data[,6], ")", sep = "")
+  data <- data[c(3,1,4)]
+  data$metadata <- metadata
+  
+  #Reordering table to make sort below quicker
+  data <- data[order(data$species, data$plotyear),]
+  
+  #Combines rows of similar species and plotyear into one row
+  combined <- data[1,]
+  
+  m <- 1 #current row of combined data
+  p[m] <- 1 #number of combinations made for row m
+  
+  for(n in 2: nrow(data)){
+    if(all(combined[m,(1:2)] == data[n, (1:2)] )){
+      combined[m,3] = combined[m,3] + data[n,3]
+      combined[m,4] = paste(combined[m,4], ",", data[n,4])
+      p[m] = p[m]+1
+    }
+    else{
+      m = m + 1
+      combined[m,] <- data[n,]
+      p[m] = 1
+    }
+  }
+  
+  combined[,4] = paste("num_of_points:", p, ";points:", combined[,4], sep = "")
+  
+  return(combined)
 }
 
 .anderson.2011 <- function(...){
@@ -38,15 +45,12 @@
 
 .chu.2013 <- function(...){
     #contains plant species and a count, but no location
-    species.count <- read.csv("https://ndownloader.figshare.com/files/5626719")
-    
-    #contains location and cattle count but no corresponding species
-    cattle.count <- read.csv("https://ndownloader.figshare.com/files/5626713")
+    species.count <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "species_list.csv"))
 }
 
 # Best approach so far, mainly due to fact that table was already in long format
-.Lynch.2013 <- function(...){
-    full.table <- read.csv("http://esapubs.org/archive/ecol/E094/243/Antarctic_Site_Inventory_census_data_1994_2012.csv")
+.lynch.2013 <- function(...){
+    full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
     data <- full.table[c(6,1,9)]
     
     # Compacts remaining unused columns into one column as one big string per entry
