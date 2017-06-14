@@ -4,37 +4,22 @@
 
 #' @importFrom fulltext ft_get_si
 
+# Plotted land and area covered by various plant species. Repeat species in the same plot were combined into
+# - one row and the area covered were summed together
+# return a long format table of data
 .adler.2007 <- function(...){
   data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
   metadata <- paste("(", data[,5], ",", data[,6], ")", sep = "")
-  data <- data[c(3,1,4)]
+  #data <- data[c(3,1,4)]
   data$metadata <- metadata
   
-  #Reordering table to make sort below quicker
-  data <- data[order(data$species, data$plotyear),]
-  
   #Combines rows of similar species and plotyear into one row
-  combined <- data[1,]
+  comm <- with(data, tapply(area, list(plotyear,species), sum, na.rm=TRUE))
   
-  m <- 1 #current row of combined data
-  p[m] <- 1 #number of combinations made for row m
+  comm <- .matrix.melt(comm, metadata)
+  comm <- comm[!is.na(comm$value),]
   
-  for(n in 2: nrow(data)){
-    if(all(combined[m,(1:2)] == data[n, (1:2)] )){
-      combined[m,3] = combined[m,3] + data[n,3]
-      combined[m,4] = paste(combined[m,4], ",", data[n,4])
-      p[m] = p[m]+1
-    }
-    else{
-      m = m + 1
-      combined[m,] <- data[n,]
-      p[m] = 1
-    }
-  }
-  
-  combined[,4] = paste("num_of_points:", p, ";points:", combined[,4], sep = "")
-  
-  return(combined)
+  return(comm)
 }
 
 .anderson.2011 <- function(...){
@@ -68,6 +53,27 @@
                  # packages for the time being this is sufficient
     data(laja)
     return(.matrix.melt(invert.sites))
+}
+
+# Data of plant cover in 100m^2 plots from various years. Cover codes 1-9 represented percentage
+# - ranges within the data. The median percentages were taken for each of the cover codes and used
+# - as the quantity
+# return a long format table
+.mcglinn.2010 <- function(...){
+  # Data of plant cover in the 100m^2 plot
+  data <- read.csv(ft_get_si("E091-124", "TGPP_cover.csv", from = "esa_archives"))
+  plot.year <- paste(data$plot, data$year, sep = "-")
+  data <- data.frame(species = data$spcode, plotyear = plot.year, cover = data$cover)
+  
+  # Median percentages for cover codes calculated in decimal form
+  percents <- c(0, .005, .015, .035, .075, .175, .375, .675, .875)
+  data$cover <- percents[data$cover]
+  
+  #turns given species codes in to "Genus species" format
+  spec_codes <- read.csv(ft_get_si("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
+  spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
+  data$species <- spec_codes[data$species]
+  return(data)
 }
 
 # Here is another example using the R package fulltext
