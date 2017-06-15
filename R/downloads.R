@@ -22,28 +22,39 @@
   return(comm)
 }
 
+# Species counts of different quads on various years
 .anderson.2011 <- function(...){
-    data <- read.csv("https://ndownloader.figshare.com/files/5619462")
-    data <- data[order(data$species), c(3, 1, 2, 4)]
-    return (data)
+  data <- read.csv(ft_get_si("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
+  data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
+  data <- data[order(data$species), c(3, 5, 4)]
+  return (data)
 }
 
 .chu.2013 <- function(...){
-    #contains plant species and a count, but no location
-    species.count <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "species_list.csv"))
+  #contains plant species and a count, but no location
+  data <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
+  colnames(data) <- tolower(colnames(data))
+  data$plot_year <- paste(data$quad, data$year, sep = "_")
+  #Combines rows of similar species and plotyear into one row
+  comm <- with(data, tapply(area, list(plot_year,species), sum, na.rm=TRUE))
+  
+  comm <- .matrix.melt(comm, metadata)
+  data <- comm[!is.na(comm$value),]
+  
+  return(data)
 }
 
 # Best approach so far, mainly due to fact that table was already in long format
 .lynch.2013 <- function(...){
-    full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
-    data <- full.table[c(6,1,9)]
+  full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
+  data <- full.table[c(6,1,9)]
     
-    # Compacts remaining unused columns into one column as one big string per entry
-    meta.data <- full.table[-c(6,1,9)]
-    meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), "=", as.character(meta.data[y,]), ", ")))})
-    data$metadata <- meta.data
-    
-    return(data)
+  # Compacts remaining unused columns into one column as one big string per entry
+  meta.data <- full.table[-c(6,1,9)]
+  meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), ":", as.character(meta.data[y,]), ", ")))})
+  data$metadata <- meta.data
+  
+  return(data)
 }
 
 
@@ -62,8 +73,8 @@
 .mcglinn.2010 <- function(...){
   # Data of plant cover in the 100m^2 plot
   data <- read.csv(ft_get_si("E091-124", "TGPP_cover.csv", from = "esa_archives"))
-  plot.year <- paste(data$plot, data$year, sep = "-")
-  data <- data.frame(species = data$spcode, plotyear = plot.year, cover = data$cover)
+  plot.year <- paste(data$plot, data$year, sep = "_")
+  data <- data.frame(species = data$spcode, plot_year = plot.year, cover = data$cover)
   
   # Median percentages for cover codes calculated in decimal form
   percents <- c(0, .005, .015, .035, .075, .175, .375, .675, .875)
