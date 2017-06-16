@@ -8,18 +8,9 @@
 # - one row and the area covered were summed together
 # return a long format table of data
 .adler.2007 <- function(...){
-  data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
-  metadata <- paste("(", data[,5], ",", data[,6], ")", sep = "")
-  #data <- data[c(3,1,4)]
-  data$metadata <- metadata
-  
-  #Combines rows of similar species and plotyear into one row
-  comm <- with(data, tapply(area, list(plotyear,species), sum, na.rm=TRUE))
-  
-  comm <- .matrix.melt(comm, metadata)
-  comm <- comm[!is.na(comm$value),]
-  
-  return(comm)
+    data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
+    comm <- with(data, tapply(area, list(plotyear,species), sum, na.rm=TRUE))
+    return(.matrix.melt(comm))
 }
 
 # Species counts of different quads on various years

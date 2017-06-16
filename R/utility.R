@@ -6,33 +6,24 @@
 #' @parma total.metadata metadata for table; will include publishing information
 #' @importFrom reshape2 melt
 #' @return data set in long format, with all metadata included
-.matrix.melt <- function(x, row.metadata, col.metadata, total.metadata){
-  # Check that 'x' is a numeric matrix with colnames and rownames. Attempts to convert to numeric
-  #  if possible. Otherwise, will stop
-  numX <- x
+.matrix.melt <- function(x, year=NA, row.metadata, col.metadata, total.metadata){
+    if(!is.numeric(x))
+        stop("Error: x is not numeric")
+    if(!is.matrix(x))
+        stop("Error: x is not a matrix")
+    x[is.na(x)] <- 0
   
-  if(!is.numeric(numX)){
-    numX <- as.numeric(x)
-    if(length(numX[is.na(numX)]) > 0){
-      stop("Error: NAs in data. Data in table might not be numeric")
-    }
-  }
-  
-  # check if presence/absense matrix by first checking if negatives exist in matrix
-  if(length(numX[numX < 0]) > 0){
-    # Then we check if only -1's and 0's exist in table; will stop otherwise.
-    if(length(numX[numX !=0 && numX != -1]) > 0){
-      stop("Error: non-presence/absence data in pres/abs input")
-    }
-  }
-  # (optional, for later) check the meta-data is intact when missing(metadata)==FALSE
-  
-  long.format <- melt(numX)[c(2,1,3)]
-  
-  # Add the meta-data in intelligently
-  
-  #Cleanup and return
-  return(long.format)
+    # Check if presence/absense matrix by first checking if negatives exist in matrix
+    if(any(x < 0))
+        if(!all(x < 0))
+            stop("'x' contains both presence/absence and abundance data")
+
+    # Reformat data
+    output <- melt(x)
+    names(output) <- c("species", "sites", "value")
+    output$year <- rep(year, ncol(x))
+    #... do some more sophisticated meta-data stuff soon...
+    return(output)
 }
 
 # Takes a data already in long format that will be converted to a string of metadata. Each row will be a single string, and the
