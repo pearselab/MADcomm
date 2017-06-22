@@ -15,7 +15,7 @@
   
     # Check if presence/absense matrix by first checking if negatives exist in matrix
     if(any(x < 0))
-        if(!all(x < 0))
+        if(!all(x <= 0))
             stop("'x' contains both presence/absence and abundance data")
 
     # Meta-data

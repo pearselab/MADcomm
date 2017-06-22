@@ -9,7 +9,7 @@
 # return a long format table of data
 .adler.2007 <- function(...){
     data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
-    comm <- with(data, tapply(area, list(plotyear,species), sum, na.rm=TRUE))
+    comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
     return(.matrix.melt(comm))
 }
 
@@ -27,12 +27,8 @@
   colnames(data) <- tolower(colnames(data))
   data$plot_year <- paste(data$quad, data$year, sep = "_")
   #Combines rows of similar species and plotyear into one row
-  comm <- with(data, tapply(area, list(plot_year,species), sum, na.rm=TRUE))
-  
-  comm <- .matrix.melt(comm, metadata)
-  data <- comm[!is.na(comm$value),]
-  
-  return(data)
+  comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
+  return(.matrix.melt(comm))
 }
 
 # Best approach so far, mainly due to fact that table was already in long format
