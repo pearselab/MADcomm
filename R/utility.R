@@ -6,7 +6,7 @@
 #' @parma total.metadata metadata for table; will include publishing information
 #' @importFrom reshape2 melt
 #' @return data set in long format, with all metadata included
-.matrix.melt <- function(x, year=NA, row.metadata, col.metadata, total.metadata){
+.matrix.melt <- function(x, species.metadata=NA, site.metadata=NA){
     if(!is.numeric(x))
         stop("Error: x is not numeric")
     if(!is.matrix(x))
@@ -18,11 +18,58 @@
         if(!all(x < 0))
             stop("'x' contains both presence/absence and abundance data")
 
+    # Meta-data
+    if(!missing(species.metadata)){
+        species.metadata <- apply(sapply(seq_along(names(species.metadata)), function(y) paste(names(species.metadata)[y],species.metadata[,y],sep=":")), 1, paste, collapse=";")
+    } else species.metadata <- rep(NA, ncol(x))
+    if(length(species.metadata) != ncol(x))
+        stop("Species meta-data dimensions do not match data")
+    if(!missing(site.metadata)){
+        site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
+    } else site.metadata <- rep(NA, ncol(x))
+    if(length(site.metadata) != ncol(x))
+        stop("Site meta-data dimensions do not match data")
+    
     # Reformat data
-    output <- melt(x)
-    names(output) <- c("species", "sites", "value")
-    output$year <- rep(year, ncol(x))
-    #... do some more sophisticated meta-data stuff soon...
+    output <- list(
+        data=melt(x),
+        spp.meta=species.metadata,
+        site.meta=site.metadata
+    )
+    names(output$data) <- c("sites", "species", "value")
+    class(output) <- "nacdb"
+    return(output)
+}
+
+.df.melt <- function(species, sites, value, species.metadata=NA, site.metadata=NA){
+    # Argument handling
+    if(!is.numeric(value))
+        stop("Error: value is not numeric")
+    species <- as.character(species)
+    sites <- as.character(sites)
+    
+    # Check if presence/absense matrix by first checking if negatives exist in matrix
+    if(any(value < 0))
+        if(!all(value < 0))
+            stop("'value' contains both presence/absence and abundance data")
+    
+    # Meta-data
+    if(!missing(species.metadata)){
+        species.metadata <- apply(sapply(seq_along(names(species.metadata)), function(y) paste(names(species.metadata)[y],species.metadata[,y],sep=":")), 1, paste, collapse=";")
+    } else species.metadata <- rep(NA, length(species))
+    if(!missing(site.metadata)){
+        site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
+    } else site.metadata <- rep(NA, length(species))
+    
+    # Reformat data
+    output <- list(
+        data=data.frame(sites=sites, species=species, value=value),
+        spp.meta=species.metadata,
+        site.meta=site.metadata
+    )
+    names(output$data) <- c("sites", "species", "value")
+    output$data <- output$data[!is.na(output$data$value),]
+    class(output) <- "nacdb"
     return(output)
 }
 

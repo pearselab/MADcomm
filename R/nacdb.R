@@ -77,11 +77,11 @@ print.nacdb <- function(x, ...){
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
     
     # Create a simple summary matrix of species and sites in x
-
+    
     # Print it to screen
-
+    print(x)
     # Return (invisibly) the output
-    invisible(output)
+    #invisible(output)
 }
 
 summary.nacdb <- function(x, ...){
