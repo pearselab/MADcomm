@@ -21,6 +21,12 @@
   return (data)
 }
 
+.baldridge.2013 <- function(...){
+  data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
+  data <- with(data, data.frame(species = paste(Genus, Species, sep = " "), plot = Site_ID, count = Abundance))
+  
+}
+
 .chu.2013 <- function(...){
   #contains plant species and a count, but no location
   data <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
