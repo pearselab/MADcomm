@@ -98,6 +98,38 @@
     return(.matrix.melt(t(data)))
 }
 
+.chamailleJammes.2016 <- function(...){
+    data <- read.csv(ft_get_si("10.1371/journal.pone.0153639", 1))
+    data <- aggregate(. ~ WATERHOLE, data = data, FUN=sum)
+    rownames(data) <- data$WATERHOLE
+    data[,1] <- NULL
+    return(.matrix.melt(data))
+}
+
+.broadway.2015 <- function(...){
+    #Fish abundance data for Wabash River for years 1974 - 2008.
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0124954", 1))
+    data$Presence <- 1
+    new.data <- with(data, tapply(Presence,list(Year, Species), sum))
+    new.data[is.na(new.data)] <- 0
+    return(.matrix.melt(new.data))
+}
+
+.andradiBrown.2016 <- function(...){
+    #Abundance data for coral fish at 7 different sites in the Great Barrier Reef.
+    data <- read.csv(ft_get_si("10.1371/journal.pone.0156641",3))
+    data <- data[,-c(7)]
+    data$Genus <- sub(" ", "", data$Genus)
+    data$Family <- sub(" ", "", data$Family)
+    data$name <- with(data, paste(Family, Genus, Species, sep = "_"))
+    data$Site <- with(data, paste(Site, Zone, Transect, sep = "_"))
+    data$Presence <- 1
+    new.data <- with(data, tapply(Presence, list(Site, name), sum))
+    new.data[is.na(new.data)] <- 0
+    return(.matrix.melt(new.data))
+}
+
+
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
 .fia <- function(...){
     .get.fia <- function(state, var){
