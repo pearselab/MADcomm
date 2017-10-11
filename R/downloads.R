@@ -9,7 +9,7 @@
 # return a long format table of data
 .adler.2007 <- function(...){
     data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
-    comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
+    comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
     return(.matrix.melt(comm))
 }
 
@@ -22,6 +22,7 @@
 }
 
 .baldridge.2013 <- function(...){
+    #NOT WORKING
   data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
   data <- with(data, data.frame(species = paste(Genus, Species, sep = " "), plot = Site_ID, count = Abundance))
   
@@ -51,8 +52,7 @@
 }
 
 
-
-.hnselmus.2013 <- function(...){
+.helmus.2013 <- function(...){
     library(pez) # This isn't how we declare packages in 'real'
                  # packages for the time being this is sufficient
     data(laja)
@@ -87,6 +87,15 @@
     data <- read.csv(ft_get_si("E092-201", "MCDB_communities.csv", "esa-data-archives"))
     # ... transform data into the desired format ...
     return(transformed.data)    
+}
+
+.chazot.2014 <- function(...){
+    #Abundance data for butterfly species from seven different sites.
+    data <- read.xls(ft_get_si("10.5061/dryad.1534j", "Abundance_dataset.xlsx"), skip = 1)
+    data <- data[-c(163,164,165),-c(2,3)]
+    rownames(data) <- data[,1]
+    data[,1] <- NULL
+    return(.matrix.melt(t(data)))
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
