@@ -15,40 +15,47 @@
 
 # Species counts of different quads on various years
 .anderson.2011 <- function(...){
-  data <- read.csv(ft_get_si("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
-  data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
-  data <- data[order(data$species), c(3, 5, 4)]
-  return (data)
+    data <- read.csv(ft_get_si("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
+    data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
+    data <- data[order(data$species), c(3, 5, 4)]
+    return (data)
 }
 
 .baldridge.2013 <- function(...){
-    #NOT WORKING
-  data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
-  data <- with(data, data.frame(species = paste(Genus, Species, sep = " "), plot = Site_ID, count = Abundance))
-  
+    #Done. Site IDs in original data is nonconsequential. 
+    abundance_data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
+    site_data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
+    new.site_data <- with(site_data, data.frame(Site_ID = Site_ID, Site_Name = paste(Site_Name, Collection_Year, sep = "_")))
+    new.site_data <- na.omit(new.site_data)
+    data <- with(abundance_data, data.frame(species = paste(Family,Genus, Species, sep = "_"), plot = Site_ID, count = Abundance))
+    data$plot<-new.site_data$Site_Name[match(data$plot, new.site_data$Site_ID)]
+    new.data <- with(data, tapply(count, list(plot, species), sum))
+    new.data[is.na(new.data)] <- 0
+    new.data <- new.data[-1,]
+    return(.matrix.melt(new.data))
 }
 
 .chu.2013 <- function(...){
-  #contains plant species and a count, but no location
-  data <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
-  colnames(data) <- tolower(colnames(data))
-  data$plot_year <- paste(data$quad, data$year, sep = "_")
-  #Combines rows of similar species and plotyear into one row
-  comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
-  return(.matrix.melt(comm))
+    #contains plant species and a count, but no location
+    data <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
+    colnames(data) <- tolower(colnames(data))
+    data$plot_year <- paste(data$quad, data$year, sep = "_")
+    #Combines rows of similar species and plotyear into one row
+    comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
+    return(.matrix.melt(comm))
 }
 
 # Best approach so far, mainly due to fact that table was already in long format
 .lynch.2013 <- function(...){
-  full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
-  data <- full.table[c(6,1,9)]
+    full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
+    data <- full.table[c(6,1,9)]
     
-  # Compacts remaining unused columns into one column as one big string per entry
-  meta.data <- full.table[-c(6,1,9)]
-  meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), ":", as.character(meta.data[y,]), ", ")))})
-  data$metadata <- meta.data
+    # Compacts remaining unused columns into one column as one big string per entry
+    meta.data <- full.table[-c(6,1,9)]
+    meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), ":", as.character(meta.data[y,]), ", ")))})
+    data$metadata <- meta.data
   
-  return(data)
+    return(data)
 }
 
 
@@ -64,20 +71,20 @@
 # - as the quantity
 # return a long format table
 .mcglinn.2010 <- function(...){
-  # Data of plant cover in the 100m^2 plot
-  data <- read.csv(ft_get_si("E091-124", "TGPP_cover.csv", from = "esa_archives"))
-  plot.year <- paste(data$plot, data$year, sep = "_")
-  data <- data.frame(species = data$spcode, plot_year = plot.year, cover = data$cover)
+    # Data of plant cover in the 100m^2 plot
+    data <- read.csv(ft_get_si("E091-124", "TGPP_cover.csv", from = "esa_archives"))
+    plot.year <- paste(data$plot, data$year, sep = "_")
+    data <- data.frame(species = data$spcode, plot_year = plot.year, cover = data$cover)
   
-  # Median percentages for cover codes calculated in decimal form
-  percents <- c(0, .005, .015, .035, .075, .175, .375, .675, .875)
-  data$cover <- percents[data$cover]
+    # Median percentages for cover codes calculated in decimal form
+    percents <- c(0, .005, .015, .035, .075, .175, .375, .675, .875)
+    data$cover <- percents[data$cover]
   
-  #turns given species codes in to "Genus species" format
-  spec_codes <- read.csv(ft_get_si("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
-  spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
-  data$species <- spec_codes[data$species]
-  return(data)
+    #turns given species codes in to "Genus species" format
+    spec_codes <- read.csv(ft_get_si("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
+    spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
+    data$species <- spec_codes[data$species]
+    return(data)
 }
 
 # Here is another example using the R package fulltext
@@ -128,6 +135,7 @@
     new.data[is.na(new.data)] <- 0
     return(.matrix.melt(new.data))
 }
+
 
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
