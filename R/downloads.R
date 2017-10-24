@@ -45,19 +45,25 @@
     return(.matrix.melt(comm))
 }
 
-# Best approach so far, mainly due to fact that table was already in long format
 .lynch.2013 <- function(...){
-    full.table <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
-    data <- full.table[c(6,1,9)]
-    
-    # Compacts remaining unused columns into one column as one big string per entry
-    meta.data <- full.table[-c(6,1,9)]
-    meta.data <- sapply((1:nrow(meta.data)), function(y) {paste(c(rbind(colnames(meta.data), ":", as.character(meta.data[y,]), ", ")))})
-    data$metadata <- meta.data
-  
-    return(data)
-}
+    #Accumulation of 19 years of seabird population abundance data collected by the Antarctic Site Inventory. 
+    full.data <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
+    data <- full.data[,c(3,6,8,9)]
+    data$site<-with(data, paste(Site_name, Season, sep = "_"))
+    data$Count[data$Count>0]<-1
+    data$Species <- sub("GEPE", "Pygoscelis_papua", data$Species)
+    data$Species <- sub("ADPE", "Pygoscelis_adeliae", data$Species)
+    data$Species <- sub("CHPE", "Pygoscelis_antarctica", data$Species)
+    data$Species <- sub("MCPE", "Eudyptes_chrysolophus", data$Species)
+    data$Species <- sub("BESH", "Phalacrocorax_atriceps", data$Species)
+    data$Species <- sub("KEGU", "Larus_dominicanus", data$Species)
+    data$Species <- sub("SOGP", "Macronectes_giganteus", data$Species)
+    new.data <- with(data, tapply(Count, list(site, Species), sum))
+    new.data[is.na(new.data)] <- 0
+    new.data[new.data > 0] <- 1
 
+    return(.matrix.melt(data))
+}
 
 .helmus.2013 <- function(...){
     library(pez) # This isn't how we declare packages in 'real'
@@ -117,7 +123,7 @@
     #Fish abundance data for Wabash River for years 1974 - 2008.
     data <- read.xls(ft_get_si("10.1371/journal.pone.0124954", 1))
     data$Presence <- 1
-    new.data <- with(data, tapply(Presence,list(Year, Species), sum))
+    new.data <- with(data, tapply(Presence, list(Year, Species), sum))
     new.data[is.na(new.data)] <- 0
     return(.matrix.melt(new.data))
 }
@@ -135,8 +141,6 @@
     new.data[is.na(new.data)] <- 0
     return(.matrix.melt(new.data))
 }
-
-
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
 .fia <- function(...){
