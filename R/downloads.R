@@ -142,6 +142,61 @@
     return(.matrix.melt(new.data))
 }
 
+.rodriguezBuritica.2013 <- function(...){
+    data <- read.csv(ft_get_si("E094-083","SMCover.csv",from = "esa_archives"))
+    species.data <- read.csv(ft_get_si("E094-083","Species.csv",from = "esa_archives"))
+    species.data$ReportedName  <- sub(" ", "_", species.data$ReportedName)
+    species.data$AcceptedName <- sub(" ", "_", species.data$AcceptedName)
+    data$species <- species.data$AcceptedName[match(data$Code, species.data$Code)]
+    data$plot_year <- with(data, paste(Plot, Year, sep = "_"))
+    transformed.data  <- with(data, tapply(Cover, list(plot_year, species), sum, na.rm=TRUE))
+    return(.matrix.melt(transformed.data))
+}
+
+.hellmann.2013 <- function(...){
+    temp <- tempfile()
+    download.file("http://esapubs.org/archive/ecol/E094/126/MosquitoDB.zip", temp)
+    data <- read.csv(unz(temp, "MosquitoDB.csv"))
+    unlink(temp)
+    data$verbatimspecificepithet <- sub(" ", "_", data$verbatimspecificepithet)
+    data$site <- with(data, paste(country, stateprovidence, county, year, sep = "_"))
+    data$site <- sub(" ", "_", data$site)
+    transformed.data  <- with(data, tapply(individualcount, list(site, verbatimspecificepithet), sum, na.rm=TRUE))
+    return(.matrix.melt(transformed.data))
+}
+
+.anderson.2012 <- function(...){
+    data <- read.csv(ft_get_si("E093-132", "allrecords_point_features.csv", from = "esa_archives"))
+    data$plotyear <- with(data, paste(quad, year, sep = "_"))
+    comm <- with(data, tapply(Canopy_cov, list(plotyear, Species), sum, na.rm=TRUE))
+    return(.matrix.melt(comm))
+}
+
+.stevens.2011 <- function(...){
+    data <- read.csv(ft_get_si("E092-128", "speciesdata.csv", from = "esa_archives"))
+    data[is.na(data)] <- 0
+    data$Site.number <- with(data, paste(Site.number, Year, sep = "_"))
+    data <- aggregate(. ~ Site.number, data = data, FUN=sum)
+    rownames(data) <- data[,1]
+    data <- data[,-c(1:4)]
+    data[data > 0] <- 1
+    return(.matrix.melt(data))
+}
+
+.raymond.2011 <- function(...){
+    data <- read.csv(ft_get_si("E092-097", "diet.csv", from = "esa_archives"))
+    date <- as.vector(data$OBSERVATION_DATE_END)
+    date <- format(as.Date(data$OBSERVATION_DATE_END, format="%d/%m/%Y"),"%Y")
+    data$date <- date
+    data$date[is.na(data$date)] <- "No.Date"
+    data$LOCATION <- as.character(data$LOCATION)
+    data$LOCATION[data$LOCATION == ""] <- "No.site"
+    data$site.year <- with(data, paste(LOCATION, date, sep = "_"))
+    data$PREDATOR_NAME_ORIGINAL <- sub(" ", "_", data$PREDATOR_NAME_ORIGINAL)
+    transformed.data <- with(data, tapply(PREDATOR_TOTAL_COUNT, list(site.year, PREDATOR_NAME_ORIGINAL), sum, na.rm = TRUE))
+    return(.matrix.melt(transformed.data))
+}
+
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
 .fia <- function(...){
     .get.fia <- function(state, var){
