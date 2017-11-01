@@ -211,7 +211,33 @@
     return(.matrix.melt(data))
 }
 
+.jian.2014 <- function(...){
+    data <- read.csv(ft_get_si("10.1371/journal.pone.0114301", 5))
+    data$site <- with(data, paste(site, date, sep = "_"))
+    transformedData <- aggregate(. ~ site, data = data[,-1], FUN=sum)
+    rownames(transformedData) <- transformedData$site
+    transformedData <- transformedData[,-1]
+    return(.matrix.melt(transformedData))
+}
 
+.ogutu.2017 <- function(...){
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0169730", 3))
+    data <- data[,1:3]
+    data$site <- "Nakuru.Wildlife.Conservancy"
+    data$site <- with(data, paste(site, Date, sep = "_"))
+    transformedData <- with(data, tapply(Count, list(site, Species), sum, na.rm = TRUE))
+    return(.matrix.melt(transformedData))
+}
+
+.gallmetzer.2017 <- function(...){
+    #No dates given for collections
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1))
+    data <- data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)]
+    rownames(data) <- data$species
+    data <- data[,-1]
+    transformedData <- as.data.frame(t(data))
+    return(.matrix.melt(transformedData))
+}
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
 .fia <- function(...){
