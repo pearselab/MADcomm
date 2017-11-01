@@ -68,7 +68,7 @@
 .helmus.2013 <- function(...){
     library(pez) # This isn't how we declare packages in 'real'
                  # packages for the time being this is sufficient
-    data(laja)
+    data(Laja)
     return(.matrix.melt(invert.sites))
 }
 
@@ -93,12 +93,10 @@
     return(data)
 }
 
-# Here is another example using the R package fulltext
-# - *please* use this package where you can to download data
 .thibault.2011 <- function(...){
-    # Load data from Internet
-    data <- read.csv(ft_get_si("E092-201", "MCDB_communities.csv", "esa-data-archives"))
-    # ... transform data into the desired format ...
+    #This one is not done
+    abundance.data <- read.csv(ft_get_si("E092-201", "MCDB_communities.csv", from = "esa_archives"))
+    site.data <- read.csv(ft_get_si("E092-201", "MCDB_sites.csv", from = "esa_archives"))
     return(transformed.data)    
 }
 
@@ -185,9 +183,7 @@
 
 .raymond.2011 <- function(...){
     data <- read.csv(ft_get_si("E092-097", "diet.csv", from = "esa_archives"))
-    date <- as.vector(data$OBSERVATION_DATE_END)
-    date <- format(as.Date(data$OBSERVATION_DATE_END, format="%d/%m/%Y"),"%Y")
-    data$date <- date
+    data$date <- format(as.Date(data$OBSERVATION_DATE_END, format="%d/%m/%Y"),"%Y")
     data$date[is.na(data$date)] <- "No.Date"
     data$LOCATION <- as.character(data$LOCATION)
     data$LOCATION[data$LOCATION == ""] <- "No.site"
@@ -196,6 +192,26 @@
     transformed.data <- with(data, tapply(PREDATOR_TOTAL_COUNT, list(site.year, PREDATOR_NAME_ORIGINAL), sum, na.rm = TRUE))
     return(.matrix.melt(transformed.data))
 }
+
+.sal.2013 <- function(...){
+    species.data <- read.csv(ft_get_si("E094-149", "table3.csv", from = "esa_archives"))
+    site.data <- read.csv(ft_get_si("E094-149", "table1.csv", from = "esa_archives"))
+    site.data$Date <- format(as.Date(site.data$Date, format="%d-%m-%Y"),"%Y")
+    site.data$site.year <- with(site.data, paste(SampleID, Date, sep = "_"))
+    species.data$X <- site.data$site.year[match(species.data$X, site.data$SampleID)]
+    rownames(species.data) <- species.data$X
+    species.data[species.data > 0] <- 1
+    return(.matrix.melt(species.data))
+}
+
+.laverick.2017 <- function(...){
+    data <- read.csv(ft_get_si("10.1371/journal.pone.0183075",7))
+    rownames(data) <- data$X
+    data <- data[,-c(44:46)]
+    return(.matrix.melt(data))
+}
+
+
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
 .fia <- function(...){
