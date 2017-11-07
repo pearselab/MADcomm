@@ -208,16 +208,19 @@
     data <- read.csv(ft_get_si("10.1371/journal.pone.0183075",7))
     rownames(data) <- data$X
     data <- data[,-c(44:46)]
-    return(.matrix.melt(data))
+    return(.matrix.melt(as.numeric(data)))
 }
 
 .jian.2014 <- function(...){
     data <- read.csv(ft_get_si("10.1371/journal.pone.0114301", 5))
     data$site <- with(data, paste(site, date, sep = "_"))
-    transformedData <- aggregate(. ~ site, data = data[,-1], FUN=sum)
-    rownames(transformedData) <- transformedData$site
-    transformedData <- transformedData[,-1]
-    return(.matrix.melt(transformedData))
+    species <- colnames(data)
+    data <- data[,-1]
+    transformedData <- aggregate(. ~ site, data = data, FUN=sum)
+    t.data <- reshape(transformedData, varying = list(names(transformedData)[2:5]), v.names = "Count", idvar = "site", times = c("Ae.vexans","Cs.melanura","Cx.salinarius", "Ps.columbiae"), timevar = "species",direction = "long")
+    rownames(t.data) <- NULL
+    t.data <- na.omit(t.data)
+    return(.df.melt(t.data$species, t.data$site, t.data$Count))
 }
 
 .ogutu.2017 <- function(...){
@@ -231,12 +234,19 @@
 
 .gallmetzer.2017 <- function(...){
     #No dates given for collections
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1))
-    data <- data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)]
-    rownames(data) <- data$species
-    data <- data[,-1]
-    transformedData <- as.data.frame(t(data))
-    return(.matrix.melt(transformedData))
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1),stringsAsFactors = FALSE)
+    data <- as.matrix(data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)])
+    data  <- unclass(data)
+    species <- data[,1]
+    data <- data[-1,-1]
+    t.data <- t(data)
+    colnames(t.data) <- species
+    for (row in nrow(t.data)){
+        for (col in ncol(t.data)){
+            t.data[row,col] <- as.numeric(t.data[row,col])
+        }
+    }
+    return(.matrix.melt(t.data))
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
