@@ -3,6 +3,7 @@
 #####################
 
 #' @importFrom fulltext ft_get_si
+#' @importFrom reshape2 melt
 
 # Plotted land and area covered by various plant species. Repeat species in the same plot were combined into
 # - one row and the area covered were summed together
@@ -200,16 +201,15 @@
     site.data$Date <- format(as.Date(site.data$Date, format="%d-%m-%Y"),"%Y")
     site.data$site.year <- with(site.data, paste(SampleID, Date, sep = "_"))
     species.data$X <- site.data$site.year[match(species.data$X, site.data$SampleID)]
-    rownames(species.data) <- species.data$X
-    species.data[species.data > 0] <- 1
-    return(.matrix.melt(species.data))
+    data <- melt(species.data, variable.name = "species", value.name = "count")
+    return(.df.melt(data$species, data$X, data$count))
 }
 
 .laverick.2017 <- function(...){
     data <- read.csv(ft_get_si("10.1371/journal.pone.0183075",7))
-    rownames(data) <- data$X
     data <- data[,-c(44:46)]
-    return(.matrix.melt(as.numeric(data)))
+    data <- melt(data, variable.name = "species", value.name = "count")
+    return(.df.melt(data$species, data$site, data$count))
 }
 
 .jian.2014 <- function(...){
@@ -239,15 +239,11 @@
 
 .gallmetzer.2017 <- function(...){
     #No dates given for collections
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1),
-                     stringsAsFactors = FALSE)
-    data <- as.matrix(data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)])
-    data  <- unclass(data)
-    species <- data[,1]
-    data <- data[-1,-1]
-    t.data <- t(data)
-    colnames(t.data) <- species
-    return(.matrix.melt(t.data))
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1), stringsAsFactors = FALSE)
+    data <- data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)]
+    data <- melt(data, id = 1, variable.name = "sites", value.name = "count")
+    data$count <- as.numeric(data$count)
+    return(.df.melt(data$species, data$sites, data$count))
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...

@@ -56,10 +56,10 @@
     # Meta-data
     if(!missing(species.metadata)){
         species.metadata <- apply(sapply(seq_along(names(species.metadata)), function(y) paste(names(species.metadata)[y],species.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else species.metadata <- rep(NA, length(unique(species)))
+    } else species.metadata <- rep(NA, length(species))
     if(!missing(site.metadata)){
         site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else site.metadata <- rep(NA, length(unique(species)))
+    } else site.metadata <- rep(NA, length(species))
     
     # Reformat data
     output <- list(
