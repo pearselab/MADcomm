@@ -16,9 +16,9 @@
 # Species counts of different quads on various years
 .anderson.2011 <- function(...){
     data <- read.csv(ft_get_si("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
-    data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
+    data$plot_year <- paste(data$quad, data$year, sep = "_")
     data <- data[order(data$species), c(3, 5, 4)]
-    return (data)
+    return(.df.melt(data$species, data$plot_year, data$count))
 }
 
 .baldridge.2013 <- function(...){
@@ -61,7 +61,6 @@
     new.data <- with(data, tapply(Count, list(site, Species), sum))
     new.data[is.na(new.data)] <- 0
     new.data[new.data > 0] <- 1
-
     return(.matrix.melt(data))
 }
 
@@ -90,7 +89,7 @@
     spec_codes <- read.csv(ft_get_si("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
     spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
     data$species <- spec_codes[data$species]
-    return(data)
+    return(.df.melt(data$species, data$plot_year, data$cover))
 }
 
 .thibault.2011 <- function(...){
@@ -112,9 +111,11 @@
 .chamailleJammes.2016 <- function(...){
     data <- read.csv(ft_get_si("10.1371/journal.pone.0153639", 1))
     data <- aggregate(. ~ WATERHOLE, data = data, FUN=sum)
-    rownames(data) <- data$WATERHOLE
-    data[,1] <- NULL
-    return(.matrix.melt(data))
+    species <- colnames(data)
+    data <- reshape(data, varying = list(names(data)[2:ncol(data)]), v.names = "Count", 
+                      idvar = "WATERHOLE", times = c("ELEPHANT", "GIRAFFE", "IMPALA","KUDU",
+                      "ROAN", "SABLE", "WILDEBEEST", "ZEBRA"), timevar = "species", direction = "long")
+    return(.df.melt(data$species, data$WATERHOLE, data$Count))
 }
 
 .broadway.2015 <- function(...){
@@ -175,10 +176,9 @@
     data[is.na(data)] <- 0
     data$Site.number <- with(data, paste(Site.number, Year, sep = "_"))
     data <- aggregate(. ~ Site.number, data = data, FUN=sum)
-    rownames(data) <- data[,1]
-    data <- data[,-c(1:4)]
-    data[data > 0] <- 1
-    return(.matrix.melt(data))
+    data <- data[,-c(2:4)]
+    t.data <- reshape(data, varying = list(colnames(data)[2:ncol(data)]), v.names = "Count", idvar = "site", times = list(colnames(data)[2:ncol(data)]), timevar = "species", direction = "long")
+    return(.df.melt(data))
 }
 
 .raymond.2011 <- function(...){
@@ -189,7 +189,8 @@
     data$LOCATION[data$LOCATION == ""] <- "No.site"
     data$site.year <- with(data, paste(LOCATION, date, sep = "_"))
     data$PREDATOR_NAME_ORIGINAL <- sub(" ", "_", data$PREDATOR_NAME_ORIGINAL)
-    transformed.data <- with(data, tapply(PREDATOR_TOTAL_COUNT, list(site.year, PREDATOR_NAME_ORIGINAL), sum, na.rm = TRUE))
+    transformed.data <- with(data, tapply(PREDATOR_TOTAL_COUNT, list(site.year,
+                                          PREDATOR_NAME_ORIGINAL), sum, na.rm = TRUE))
     return(.matrix.melt(transformed.data))
 }
 
@@ -217,7 +218,10 @@
     species <- colnames(data)
     data <- data[,-1]
     transformedData <- aggregate(. ~ site, data = data, FUN=sum)
-    t.data <- reshape(transformedData, varying = list(names(transformedData)[2:5]), v.names = "Count", idvar = "site", times = c("Ae.vexans","Cs.melanura","Cx.salinarius", "Ps.columbiae"), timevar = "species",direction = "long")
+    t.data <- reshape(transformedData, varying = list(names(transformedData)[2:5]),
+                      v.names = "Count", idvar = "site", times = c("Ae.vexans",
+                      "Cs.melanura","Cx.salinarius", "Ps.columbiae"), timevar = 
+                      "species",direction = "long")
     rownames(t.data) <- NULL
     t.data <- na.omit(t.data)
     return(.df.melt(t.data$species, t.data$site, t.data$Count))
@@ -228,24 +232,21 @@
     data <- data[,1:3]
     data$site <- "Nakuru.Wildlife.Conservancy"
     data$site <- with(data, paste(site, Date, sep = "_"))
-    transformedData <- with(data, tapply(Count, list(site, Species), sum, na.rm = TRUE))
+    transformedData <- with(data, tapply(Count, list(site, Species), sum,
+                                         na.rm = TRUE))
     return(.matrix.melt(transformedData))
 }
 
 .gallmetzer.2017 <- function(...){
     #No dates given for collections
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1),stringsAsFactors = FALSE)
+    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1),
+                     stringsAsFactors = FALSE)
     data <- as.matrix(data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)])
     data  <- unclass(data)
     species <- data[,1]
     data <- data[-1,-1]
     t.data <- t(data)
     colnames(t.data) <- species
-    for (row in nrow(t.data)){
-        for (col in ncol(t.data)){
-            t.data[row,col] <- as.numeric(t.data[row,col])
-        }
-    }
     return(.matrix.melt(t.data))
 }
 
