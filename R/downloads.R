@@ -248,7 +248,7 @@
     return(.df.melt(data$species, data$sites, data$count))
 }
 
-.coblentz.2015.1 <- function(...){
+.coblentz.2015.a <- function(...){
     data <- read.xls(ft_get_si("10.5061/dryad.j2c13", "Invert Community Data 2012 RAW.xlsx"), stringsAsFactors=FALSE)
     colnames(data) <- with(data, paste(colnames(data), data[3,], sep="_"))
     data <- data[-1:-3,]
@@ -259,7 +259,7 @@
     return(.matrix.melt(data))
 }
 
-.coblentz.2015.2 <- function(...) {
+.coblentz.2015.b <- function(...) {
     # This dataset is combining 23 years of observations at one site. They combine
     # the counts (which are not in the dataset) to get the mean abundance across 
     # <= 23 years...
