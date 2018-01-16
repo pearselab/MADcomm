@@ -71,7 +71,7 @@
     data(Laja)
     return(.matrix.melt(invert.sites))
 }
-
+#
 # Data of plant cover in 100m^2 plots from various years. Cover codes 1-9 represented percentage
 # - ranges within the data. The median percentages were taken for each of the cover codes and used
 # - as the quantity
@@ -178,8 +178,10 @@
     data$Site.number <- with(data, paste(Site.number, Year, sep = "_"))
     data <- aggregate(. ~ Site.number, data = data, FUN=sum)
     data <- data[,-c(2:4)]
-    t.data <- reshape(data, varying = list(colnames(data)[2:ncol(data)]), v.names = "Count", idvar = "site", times = list(colnames(data)[2:ncol(data)]), timevar = "species", direction = "long")
-    return(.df.melt(data))
+    t.data <- reshape(data, varying = list(colnames(data)[2:ncol(data)]), v.names = "Count", 
+                        idvar = "site", times = list(colnames(data)[2:ncol(data)]), 
+                        timevar = "species", direction = "long")
+    return(.df.melt(data$species, data$site, data$Count))
 }
 
 .raymond.2011 <- function(...){
@@ -244,6 +246,29 @@
     data <- melt(data, id = 1, variable.name = "sites", value.name = "count")
     data$count <- as.numeric(data$count)
     return(.df.melt(data$species, data$sites, data$count))
+}
+
+.coblentz.2015.1 <- function(...){
+    data <- read.xls(ft_get_si("10.5061/dryad.j2c13", "Invert Community Data 2012 RAW.xlsx"), stringsAsFactors=FALSE)
+    colnames(data) <- with(data, paste(colnames(data), data[3,], sep="_"))
+    data <- data[-1:-3,]
+    species <- data[,1]
+    data  <- data[,-1]
+    data <- sapply(data, as.numeric)
+    rownames(data) <- species
+    return(.matrix.melt(data))
+}
+
+.coblentz.2015.2 <- function(...) {
+    # This dataset is combining 23 years of observations at one site. They combine
+    # the counts (which are not in the dataset) to get the mean abundance across 
+    # <= 23 years...
+    # They also give the mean counts during selected years (89-94 and 06-11) so 
+    # I have used those instead...
+    data <- read.csv(ft_get_si("10.5061/dryad.65v10", "LaSelvaBirdTrendsDatatable.csv"), stringsAsFactors=FALSE)
+    data<-melt(data, id.vars=1,11:12)
+    data$site <- gsub("MeanCount", "LaSelvaBiologicalStation_CostaRica", data$variable)
+    return(.df.melt(species=data$ScientificName, sites=data$site, value=data$value))
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...

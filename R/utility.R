@@ -26,8 +26,8 @@
         stop("Species meta-data dimensions do not match data")
     if(!missing(site.metadata)){
         site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else site.metadata <- rep(NA, ncol(x))
-    if(length(site.metadata) != ncol(x))
+    } else site.metadata <- rep(NA, nrow(x))
+    if(length(site.metadata) != nrow(x))
         stop("Site meta-data dimensions do not match data")
     
     # Reformat data
@@ -59,7 +59,7 @@
     } else species.metadata <- rep(NA, length(species))
     if(!missing(site.metadata)){
         site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else site.metadata <- rep(NA, length(species))
+    } else site.metadata <- rep(NA, length(sites))
     
     # Reformat data
     output <- list(
