@@ -6,69 +6,101 @@
 #' @parma total.metadata metadata for table; will include publishing information
 #' @importFrom reshape2 melt
 #' @return data set in long format, with all metadata included
-.matrix.melt <- function(x, species.metadata=NA, site.metadata=NA){
-    if(!is.numeric(x))
-        stop("Error: x is not numeric")
-    if(!is.matrix(x))
-        stop("Error: x is not a matrix")
-    x[is.na(x)] <- 0
-  
-    # Check if presence/absense matrix by first checking if negatives exist in matrix
-    if(any(x < 0))
-        if(!all(x < 0))
-            stop("'x' contains both presence/absence and abundance data")
+.matrix.melt <- function(x, study.metadata=data.frame(units=NA, other=NA),
+                         site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
+                         species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)){
 
-    # Meta-data
-    if(!missing(species.metadata)){
-        species.metadata <- apply(sapply(seq_along(names(species.metadata)), function(y) paste(names(species.metadata)[y],species.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else species.metadata <- rep(NA, ncol(x))
-    if(length(species.metadata) != ncol(x))
-        stop("Species meta-data dimensions do not match data")
-    if(!missing(site.metadata)){
-        site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else site.metadata <- rep(NA, ncol(x))
-    if(length(site.metadata) != ncol(x))
-        stop("Site meta-data dimensions do not match data")
-    
-    # Reformat data
-    output <- list(
-        data=melt(x),
-        spp.meta=species.metadata,
-        site.meta=site.metadata
-    )
-    names(output$data) <- c("sites", "species", "value")
-    class(output) <- "nacdb"
-    return(output)
+    #######################
+    # Argument handling ###
+    #######################
+    for(i in seq_along(names(study.metadata)))
+        if(is.factor(study.metadata[,i]))
+            study.metadata[,i] <- as.character(study.metadata[,i])
+    for(i in seq_along(names(site.metadata)))
+        if(is.factor(site.metadata[,i]))
+            site.metadata[,i] <- as.character(site.metadata[,i])
+    for(i in seq_along(names(species.metadata)))
+        if(is.factor(species.metadata[,i]))
+            species.metadata[,i] <- as.character(species.metadata[,i])
+    if(!is.numeric(x))
+        stop("'value' is not numeric")
+    if(!is.matrix(x))
+        stop("'x' is not a matrix")
+    if(length(dim(x))!=2)
+        stop("'x' is not a two-dimensional matrix")
+    if(!identical(rownames(x), site.metadata$id))
+        stop("Mismatch between site (names?) and site meta-data")
+    if(!identical(colnames(x), species.metadata$species))
+        stop("Mismatch between species (names?) and species meta-data")
+
+    ######################
+    # Dispatch    ########
+    # to .df.melt ########
+    # and return  ########
+    ######################
+    site.id <- rownames(x)[as.numeric(row(x))]
+    species <- colnames(x)[as.numeric(col(x))]
+    value <- as.numeric(x)
+    return(.df.melt(species, site.id, value, study.metadata, site.metadata, species.metadata))
 }
 
-.df.melt <- function(species, sites, value, species.metadata=NA, site.metadata=NA){
-    # Argument handling
+.df.melt <- function(species, site.id, value,
+                     study.metadata=data.frame(units=NA, other=NA),
+                     site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
+                     species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)){
+    #######################
+    # Argument handling ###
+    #######################
     if(!is.numeric(value))
-        stop("Error: value is not numeric")
+        stop("'value' is not numeric")
+    if(any(is.na(value)))
+        stop("No NAs in 'value'")
+    if(any(is.na(species)))
+        stop("No NAs in 'species'")
+    if(any(is.na(site.id)))
+        stop("No NAs in 'site.id'")
     species <- as.character(species)
-    sites <- as.character(sites)
-    
-    # Check if presence/absense matrix by first checking if negatives exist in matrix
-    if(any(value < 0))
-        if(!all(value < 0))
-            stop("'value' contains both presence/absence and abundance data")
-    
-    # Meta-data
-    if(!missing(species.metadata)){
-        species.metadata <- apply(sapply(seq_along(names(species.metadata)), function(y) paste(names(species.metadata)[y],species.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else species.metadata <- rep(NA, length(species))
-    if(!missing(site.metadata)){
-        site.metadata <- apply(sapply(seq_along(names(site.metadata)), function(y) paste(names(site.metadata)[y],site.metadata[,y],sep=":")), 1, paste, collapse=";")
-    } else site.metadata <- rep(NA, length(species))
-    
+    site.id <- as.character(site.id)
+
+    ######################
+    # Meta-data ##########
+    ######################
+    # Study
+    if(!identical(c("units","other"), names(study.metadata)))
+        stop("Incorrectly formatted study meta-data")
+    if(is.na(study.metadata$units))
+        stop("Study must have units of measurement")
+    if(!all(is.na(study.metadata$other)))
+        study.metadata$other <- apply(sapply(seq_along(names(study.metadata$other)), function(y) paste(names(study.metadata$other)[y],study.metadata$other[,y],sep=":")), 1, paste, collapse=";")
+    # Site
+    if(!identical(c("id","year","name","lat","long","address","other"), names(site.metadata)))
+        stop("Incorrectly formatted site meta-data")
+    if(length(intersect(unique(site.id), site.metadata$id)) != nrow(site.metadata))
+        stop("Site meta-data must contain information about all sites")
+    if(length(intersect(site.metadata$id,unique(site.id))) != nrow(site.metadata))
+        stop("Site meta-data must only contain information about present sites")
+    if(!all(is.na(site.metadata$other)))
+        site.metadata$other <- apply(sapply(seq_along(names(site.metadata$other)), function(y) paste(names(site.metadata$other)[y],site.metadata$other[,y],sep=":")), 1, paste, collapse=";")
+    # Species
+    if(!identical(c("species","taxonomy","other"), names(species.metadata)))
+        stop("Incorrectly formatted species meta-data")
+    if(length(intersect(unique(species), species.metadata$species)) != nrow(species.metadata))
+        stop("Species meta-data must contain information about all species")
+    if(length(intersect(species.metadata$species,unique(species))) != nrow(species.metadata))
+        stop("Species meta-data must only contain information about present species")
+    if(!all(is.na(species.metadata$other)))
+        species.metadata$other <- apply(sapply(seq_along(names(species.metadata$other)), function(y) paste(names(species.metadata$other)[y],species.metadata$other[,y],sep=":")), 1, paste, collapse=";")
+
+    ######################
+    # Format and return ##
+    ######################
     # Reformat data
     output <- list(
-        data=data.frame(sites=sites, species=species, value=value),
-        spp.meta=species.metadata,
-        site.meta=site.metadata
+        data=data.frame(site.id, species, value),
+        spp.metadata=species.metadata,
+        site.metadata=site.metadata,
+        study.metadata=study.metadata
     )
-    names(output$data) <- c("sites", "species", "value")
-    output$data <- output$data[!is.na(output$data$value),]
     class(output) <- "nacdb"
     return(output)
 }

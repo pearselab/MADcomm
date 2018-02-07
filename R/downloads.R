@@ -10,7 +10,10 @@
 .adler.2007 <- function(...){
     data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
     comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
-    return(.matrix.melt(comm))
+    comm[is.na(comm)] <- 0
+    year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
+    name <- substr(rownames(comm), 1, 4)
+    return(.matrix.melt(comm, data.frame(units="#", other=NA), data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",other=NA), data.frame(species=colnames(comm),taxonomy=NA,other=NA)))
 }
 
 # Species counts of different quads on various years
