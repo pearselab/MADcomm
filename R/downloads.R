@@ -117,3 +117,4 @@
     t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
     data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
 }
+
