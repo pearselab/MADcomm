@@ -2,13 +2,13 @@
 # ADD DOIs ##########
 #####################
 
-#' @importFrom fulltext ft_get_si
+#' @importFrom suppdata suppdata
 
 # Plotted land and area covered by various plant species. Repeat species in the same plot were combined into
 # - one row and the area covered were summed together
 # return a long format table of data
 .adler.2007 <- function(...){
-    data <- read.csv(ft_get_si("E088-161", "allrecords.csv", from = "esa_archives"))
+    data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
     comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
     comm[is.na(comm)] <- 0
     year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
@@ -18,7 +18,7 @@
 
 # Species counts of different quads on various years
 .anderson.2011 <- function(...){
-    data <- read.csv(ft_get_si("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
+    data <- read.csv(suppdata("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
     data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
     data <- data[order(data$species), c(3, 5, 4)]
     return (data)
@@ -26,8 +26,8 @@
 
 .baldridge.2013 <- function(...){
     #Done. Site IDs in original data is nonconsequential. 
-    abundance_data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
-    site_data <- read.csv(ft_get_si("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
+    abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
+    site_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
     new.site_data <- with(site_data, data.frame(Site_ID = Site_ID, Site_Name = paste(Site_Name, Collection_Year, sep = "_")))
     new.site_data <- na.omit(new.site_data)
     data <- with(abundance_data, data.frame(species = paste(Family,Genus, Species, sep = "_"), plot = Site_ID, count = Abundance))
@@ -40,7 +40,7 @@
 
 .chu.2013 <- function(...){
     #contains plant species and a count, but no location
-    data <- read.csv(ft_get_si("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
+    data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
     colnames(data) <- tolower(colnames(data))
     data$plot_year <- paste(data$quad, data$year, sep = "_")
     #Combines rows of similar species and plotyear into one row
@@ -50,7 +50,7 @@
 
 .lynch.2013 <- function(...){
     #Accumulation of 19 years of seabird population abundance data collected by the Antarctic Site Inventory. 
-    full.data <- read.csv(ft_get_si("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
+    full.data <- read.csv(suppdata("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
     data <- full.data[,c(3,6,8,9)]
     data$site<-with(data, paste(Site_name, Season, sep = "_"))
     data$Count[data$Count>0]<-1
@@ -81,7 +81,7 @@
 # return a long format table
 .mcglinn.2010 <- function(...){
     # Data of plant cover in the 100m^2 plot
-    data <- read.csv(ft_get_si("E091-124", "TGPP_cover.csv", from = "esa_archives"))
+    data <- read.csv(suppdata("E091-124", "TGPP_cover.csv", from = "esa_archives"))
     plot.year <- paste(data$plot, data$year, sep = "_")
     data <- data.frame(species = data$spcode, plot_year = plot.year, cover = data$cover)
   
@@ -90,7 +90,7 @@
     data$cover <- percents[data$cover]
   
     #turns given species codes in to "Genus species" format
-    spec_codes <- read.csv(ft_get_si("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
+    spec_codes <- read.csv(suppdata("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
     spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
     data$species <- spec_codes[data$species]
     return(data)
@@ -98,14 +98,14 @@
 
 .thibault.2011 <- function(...){
     #This one is not done
-    abundance.data <- read.csv(ft_get_si("E092-201", "MCDB_communities.csv", from = "esa_archives"))
-    site.data <- read.csv(ft_get_si("E092-201", "MCDB_sites.csv", from = "esa_archives"))
+    abundance.data <- read.csv(suppdata("E092-201", "MCDB_communities.csv", from = "esa_archives"))
+    site.data <- read.csv(suppdata("E092-201", "MCDB_sites.csv", from = "esa_archives"))
     return(transformed.data)    
 }
 
 .chazot.2014 <- function(...){
     #Abundance data for butterfly species from seven different sites.
-    data <- read.xls(ft_get_si("10.5061/dryad.1534j", "Abundance_dataset.xlsx"), skip = 1)
+    data <- read.xls(suppdata("10.5061/dryad.1534j", "Abundance_dataset.xlsx"), skip = 1)
     data <- data[-c(163,164,165),-c(2,3)]
     rownames(data) <- data[,1]
     data[,1] <- NULL
@@ -113,7 +113,7 @@
 }
 
 .chamailleJammes.2016 <- function(...){
-    data <- read.csv(ft_get_si("10.1371/journal.pone.0153639", 1))
+    data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1))
     data <- aggregate(. ~ WATERHOLE, data = data, FUN=sum)
     rownames(data) <- data$WATERHOLE
     data[,1] <- NULL
@@ -122,7 +122,7 @@
 
 .broadway.2015 <- function(...){
     #Fish abundance data for Wabash River for years 1974 - 2008.
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0124954", 1))
+    data <- read.xls(suppdata("10.1371/journal.pone.0124954", 1))
     data$Presence <- 1
     new.data <- with(data, tapply(Presence, list(Year, Species), sum))
     new.data[is.na(new.data)] <- 0
@@ -131,7 +131,7 @@
 
 .andradiBrown.2016 <- function(...){
     #Abundance data for coral fish at 7 different sites in the Great Barrier Reef.
-    data <- read.csv(ft_get_si("10.1371/journal.pone.0156641",3))
+    data <- read.csv(suppdata("10.1371/journal.pone.0156641",3))
     data <- data[,-c(7)]
     data$Genus <- sub(" ", "", data$Genus)
     data$Family <- sub(" ", "", data$Family)
@@ -144,8 +144,8 @@
 }
 
 .rodriguezBuritica.2013 <- function(...){
-    data <- read.csv(ft_get_si("E094-083","SMCover.csv",from = "esa_archives"))
-    species.data <- read.csv(ft_get_si("E094-083","Species.csv",from = "esa_archives"))
+    data <- read.csv(suppdata("E094-083","SMCover.csv",from = "esa_archives"))
+    species.data <- read.csv(suppdata("E094-083","Species.csv",from = "esa_archives"))
     species.data$ReportedName  <- sub(" ", "_", species.data$ReportedName)
     species.data$AcceptedName <- sub(" ", "_", species.data$AcceptedName)
     data$species <- species.data$AcceptedName[match(data$Code, species.data$Code)]
@@ -167,14 +167,14 @@
 }
 
 .anderson.2012 <- function(...){
-    data <- read.csv(ft_get_si("E093-132", "allrecords_point_features.csv", from = "esa_archives"))
+    data <- read.csv(suppdata("E093-132", "allrecords_point_features.csv", from = "esa_archives"))
     data$plotyear <- with(data, paste(quad, year, sep = "_"))
     comm <- with(data, tapply(Canopy_cov, list(plotyear, Species), sum, na.rm=TRUE))
     return(.matrix.melt(comm))
 }
 
 .stevens.2011 <- function(...){
-    data <- read.csv(ft_get_si("E092-128", "speciesdata.csv", from = "esa_archives"))
+    data <- read.csv(suppdata("E092-128", "speciesdata.csv", from = "esa_archives"))
     data[is.na(data)] <- 0
     data$Site.number <- with(data, paste(Site.number, Year, sep = "_"))
     data <- aggregate(. ~ Site.number, data = data, FUN=sum)
@@ -185,7 +185,7 @@
 }
 
 .raymond.2011 <- function(...){
-    data <- read.csv(ft_get_si("E092-097", "diet.csv", from = "esa_archives"))
+    data <- read.csv(suppdata("E092-097", "diet.csv", from = "esa_archives"))
     data$date <- format(as.Date(data$OBSERVATION_DATE_END, format="%d/%m/%Y"),"%Y")
     data$date[is.na(data$date)] <- "No.Date"
     data$LOCATION <- as.character(data$LOCATION)
@@ -197,8 +197,8 @@
 }
 
 .sal.2013 <- function(...){
-    species.data <- read.csv(ft_get_si("E094-149", "table3.csv", from = "esa_archives"))
-    site.data <- read.csv(ft_get_si("E094-149", "table1.csv", from = "esa_archives"))
+    species.data <- read.csv(suppdata("E094-149", "table3.csv", from = "esa_archives"))
+    site.data <- read.csv(suppdata("E094-149", "table1.csv", from = "esa_archives"))
     site.data$Date <- format(as.Date(site.data$Date, format="%d-%m-%Y"),"%Y")
     site.data$site.year <- with(site.data, paste(SampleID, Date, sep = "_"))
     species.data$X <- site.data$site.year[match(species.data$X, site.data$SampleID)]
@@ -208,14 +208,14 @@
 }
 
 .laverick.2017 <- function(...){
-    data <- read.csv(ft_get_si("10.1371/journal.pone.0183075",7))
+    data <- read.csv(suppdata("10.1371/journal.pone.0183075",7))
     rownames(data) <- data$X
     data <- data[,-c(44:46)]
     return(.matrix.melt(data))
 }
 
 .jian.2014 <- function(...){
-    data <- read.csv(ft_get_si("10.1371/journal.pone.0114301", 5))
+    data <- read.csv(suppdata("10.1371/journal.pone.0114301", 5))
     data$site <- with(data, paste(site, date, sep = "_"))
     transformedData <- aggregate(. ~ site, data = data[,-1], FUN=sum)
     rownames(transformedData) <- transformedData$site
@@ -224,7 +224,7 @@
 }
 
 .ogutu.2017 <- function(...){
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0169730", 3))
+    data <- read.xls(suppdata("10.1371/journal.pone.0169730", 3))
     data <- data[,1:3]
     data$site <- "Nakuru.Wildlife.Conservancy"
     data$site <- with(data, paste(site, Date, sep = "_"))
@@ -234,7 +234,7 @@
 
 .gallmetzer.2017 <- function(...){
     #No dates given for collections
-    data <- read.xls(ft_get_si("10.1371/journal.pone.0180820", 1))
+    data <- read.xls(suppdata("10.1371/journal.pone.0180820", 1))
     data <- data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)]
     rownames(data) <- data$species
     data <- data[,-1]
