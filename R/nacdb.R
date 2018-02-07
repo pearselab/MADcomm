@@ -43,7 +43,7 @@ nacdb <- function(cache, datasets, delay=5){
         stop("Error: ", paste(missing, collapse=", "), "not in nacdb")
     }
     
-    #Do work and return
+    #Do data loads
     output <- vector("list", length(datasets))
     for(i in seq_along(datasets)){
         prog.bar(i, length(datasets))
@@ -53,6 +53,12 @@ nacdb <- function(cache, datasets, delay=5){
                 output[[i]] <- readRDS(path)
             } else {
                 output[[i]] <- eval(as.name(datasets[i]))()
+                output[[i]]$data$study <- datasets[i]
+                output[[i]]$species.metadata$study <- datasets[i]
+                output[[i]]$site.metadata$study <- datasets[i]
+                output[[i]]$study.metadata$study <- datasets[i]
+                output[[i]]$data$site <- paste0(output[[i]]$data$site,datasets[i])
+                output[[i]]$site.metadata$site <- paste0(output[[i]]$site.metadata$site,datasets[i])
                 saveRDS(output[[i]], path)
                 Sys.sleep(delay)
             }
@@ -62,11 +68,13 @@ nacdb <- function(cache, datasets, delay=5){
         }
     }
 
-    # Merge the community matrices that have been loaded
-    # - probably using something like do.call(rbind, output)
-
-    # Likely alter the output in some way to make it more useful
-    
+    # Merge data and return
+    output <- list(
+        data=do.call(rbind, lapply(output, function(x) x$data)),
+        species.metadata=do.call(rbind, lapply(output, function(x) x$species.metadata)),
+        site.metadata=do.call(rbind, lapply(output, function(x) x$site.metadata)),
+        study.metadata=do.call(rbind, lapply(output, function(x) x$study.metadata))
+    )
     class(output) <- "nacdb"
     return(output)
 }
@@ -77,44 +85,57 @@ print.nacdb <- function(x, ...){
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
     
     # Create a simple summary matrix of species and sites in x
-    
+    n.species <- length(unique(x$species.metadata$species))
+    n.sites <- length(unique(x$site.metadata$species))
+
     # Print it to screen
-    print(x)
-    # Return (invisibly) the output
-    #invisible(output)
+    cat("\n A Community DataBase containing:\n", n.species, " species (columns)\n", n.sites, " sites (rows)\n")
+    invisible(setNames(c(n.species,n.sites), c("n.species","n.sites")))
 }
 
 summary.nacdb <- function(x, ...){
     print.nacdb(x, ...)
 }
 
-"[.nacdb" <- function(x, spp, traits){
+"[.nacdb" <- function(x, sites, spp){
     # Argument handling
     if(!inherits(x, "nacdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
 
-    # Species
-    if(!missing(spp)){
-        if(any(x$numeric$species %in% spp))
-            x$numeric <- x$numeric[x$numeric$species %in% spp,] else
-                                                                    x$numeric <- NULL
-        if(any(x$categorical$species %in% spp))
-            x$categorical <- x$categorical[x$categorical$species %in% spp,] else
-                                                                          x$categorical <- NULL
+    # Setup null output in case of no match
+    null <- list(
+        data=data.frame(species=NA,site.id=NA,value=NA),
+        study.metadata=data.frame(units=NA,other=NA),
+        site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
+        species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)
+    )
+    class(null) <- "nacdb"
+
+    # Site subsetting
+    if(!missing(sites)){
+        if(any(x$site.metadata$id %in% sites)){
+            x$data <- x$data[x$data$site.id %in% sites,]
+            x$species.metadata <- x$species.metadata[x$species.metadata %in% x$data$species,]
+            x$site.metadata <- x$site.metadata[x$site.metadata$id %in% sites,]
+            x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
+        } else {
+            return(null)
+        }
     }
     
-    # Traits
-    if(!missing(traits)){
-        if(any(x$numeric$variable %in% traits))
-            x$numeric <- x$numeric[x$numeric$variable %in% traits,] else
-                                                                        x$categorical <- NULL
-        if(any(x$categorical$variable %in% traits))
-            x$categorical <- x$categorical[x$categorical$variable %in% traits,] else
-                                                                              x$categorical <- NULL
+    # Species subsetting
+    if(!missing(spp)){
+        if(any(x$species.metadata$species %in% spp)){
+            x$data <- x$data[x$data$species %in% spp,]
+            x$species.metadata <- x$species.metadata[x$species.metadata %in% spp,]
+            x$site.metadata <- x$site.metadata[x$site.metadata %in% x$data$site,]
+            x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
+        } else {
+            return(null)
+        }
     }
 
-    output <- list(categorical=x$categorical, numeric=x$numeric)
-    class(output) <- "nacdb"
+    # Return (already checked for null case)
     return(output)
 }
 
