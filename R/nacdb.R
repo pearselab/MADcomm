@@ -48,30 +48,32 @@ nacdb <- function(cache, datasets, delay=5){
     for(i in seq_along(datasets)){
         prog.bar(i, length(datasets))
         if(!missing(cache)){
+            if(!file.exists(cache))
+                stop("Cache directory does not exist")
             path <- file.path(cache,paste0(datasets[i], ".RDS"))
-            if(file.exists(path)){
-                output[[i]] <- readRDS(path)
-            } else {
-                output[[i]] <- eval(as.name(datasets[i]))()
-                output[[i]]$data$study <- datasets[i]
-                output[[i]]$species.metadata$study <- datasets[i]
-                output[[i]]$site.metadata$study <- datasets[i]
-                output[[i]]$study.metadata$study <- datasets[i]
-                output[[i]]$data$site <- paste0(output[[i]]$data$site,datasets[i])
-                output[[i]]$site.metadata$site <- paste0(output[[i]]$site.metadata$site,datasets[i])
-                saveRDS(output[[i]], path)
-                Sys.sleep(delay)
-            }
-        } else {
-            output[[i]] <- eval(as.name(datasets[i]))()
-            Sys.sleep(delay)
+        } else path <- NA
+        if(!is.na(path) && file.exists(path)){
+            output[[i]] <- readRDS(path)
+            next()
         }
+        
+        output[[i]] <- eval(as.name(datasets[i]))()
+        
+        output[[i]]$data$study <- datasets[i]
+        output[[i]]$spp.metadata$study <- datasets[i]
+        output[[i]]$site.metadata$study <- datasets[i]
+        output[[i]]$study.metadata$study <- datasets[i]
+        output[[i]]$data$site.id <- paste0(output[[i]]$data$site.id,datasets[i])
+        output[[i]]$site.metadata$id <- paste0(output[[i]]$site.metadata$id,datasets[i])
+        
+        if(!is.na(path))
+            saveRDS(output[[i]], path)
+        Sys.sleep(delay)
     }
-
     # Merge data and return
     output <- list(
         data=do.call(rbind, lapply(output, function(x) x$data)),
-        species.metadata=do.call(rbind, lapply(output, function(x) x$species.metadata)),
+        spp.metadata=do.call(rbind, lapply(output, function(x) x$spp.metadata)),
         site.metadata=do.call(rbind, lapply(output, function(x) x$site.metadata)),
         study.metadata=do.call(rbind, lapply(output, function(x) x$study.metadata))
     )
@@ -85,8 +87,8 @@ print.nacdb <- function(x, ...){
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
     
     # Create a simple summary matrix of species and sites in x
-    n.species <- length(unique(x$species.metadata$species))
-    n.sites <- length(unique(x$site.metadata$species))
+    n.species <- length(unique(species(x)))
+    n.sites <- length(unique(sites(x)))
 
     # Print it to screen
     cat("\n A Community DataBase containing:\n", n.species, " species (columns)\n", n.sites, " sites (rows)\n")
@@ -107,7 +109,7 @@ summary.nacdb <- function(x, ...){
         data=data.frame(species=NA,site.id=NA,value=NA),
         study.metadata=data.frame(units=NA,other=NA),
         site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
-        species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)
+        spp.metadata=data.frame(species=NA, taxonomy=NA, other=NA)
     )
     class(null) <- "nacdb"
 
@@ -115,7 +117,7 @@ summary.nacdb <- function(x, ...){
     if(!missing(sites)){
         if(any(x$site.metadata$id %in% sites)){
             x$data <- x$data[x$data$site.id %in% sites,]
-            x$species.metadata <- x$species.metadata[x$species.metadata %in% x$data$species,]
+            x$spp.metadata <- x$spp.metadata[x$spp.metadata %in% x$data$species,]
             x$site.metadata <- x$site.metadata[x$site.metadata$id %in% sites,]
             x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
         } else {
@@ -125,9 +127,9 @@ summary.nacdb <- function(x, ...){
     
     # Species subsetting
     if(!missing(spp)){
-        if(any(x$species.metadata$species %in% spp)){
+        if(any(x$spp.metadata$species %in% spp)){
             x$data <- x$data[x$data$species %in% spp,]
-            x$species.metadata <- x$species.metadata[x$species.metadata %in% spp,]
+            x$spp.metadata <- x$spp.metadata[x$spp.metadata %in% spp,]
             x$site.metadata <- x$site.metadata[x$site.metadata %in% x$data$site,]
             x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
         } else {
@@ -142,13 +144,14 @@ summary.nacdb <- function(x, ...){
 species <- function(x, ...){
     if(!inherits(x, "nacdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    return(unique(x$spp.metadata$species))
     # Return a vector of the sites in nacdb (?)
 }
 
 sites <- function(x, ...){
     if(!inherits(x, "nacdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
-    # Return a vector of the sites in nacdb (?)
+    return(unique(x$site.metadata$id))
 }
 
 citations <- function(x){

@@ -7,7 +7,7 @@
 #' @importFrom reshape2 melt
 #' @return data set in long format, with all metadata included
 .matrix.melt <- function(x, study.metadata=data.frame(units=NA, other=NA),
-                         site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
+                         site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,area=NA,other=NA),
                          species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)){
 
     #######################
@@ -46,7 +46,7 @@
 
 .df.melt <- function(species, site.id, value,
                      study.metadata=data.frame(units=NA, other=NA),
-                     site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
+                     site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,area=NA,other=NA),
                      species.metadata=data.frame(species=NA, taxonomy=NA, other=NA)){
     #######################
     # Argument handling ###
@@ -65,32 +65,44 @@
     ######################
     # Meta-data ##########
     ######################
+    .create.other <- function(metadata, columns){
+        if(!all(columns %in% names(metadata))){
+            other <- metadata[,!names(metadata) %in% columns, drop=FALSE]
+            metadata <- metadata[,names(metadata) %in% columns, drop=FALSE]        
+            other <- sapply(seq_along(names(other)), function(y) paste(names(other)[y],other[,y],sep=":"))
+            if(nrow(metadata) > 1)
+                other <- paste(other, collapse=";") else other <- apply(other, 1, paste, collapse=";")
+            metadata$other <- other
+        } else {
+            metadata$other <- NA
+        }
+        return(metadata[,c(columns,"other")])
+    }
     # Study
-    if(!identical(c("units","other"), names(study.metadata)))
+    if(nrow(study.metadata) > 1)
+        stop("Only one row of meta-data per study")
+    if(!all("units" %in% names(study.metadata)))
         stop("Incorrectly formatted study meta-data")
     if(is.na(study.metadata$units))
         stop("Study must have units of measurement")
-    if(!all(is.na(study.metadata$other)))
-        study.metadata$other <- apply(sapply(seq_along(names(study.metadata$other)), function(y) paste(names(study.metadata$other)[y],study.metadata$other[,y],sep=":")), 1, paste, collapse=";")
+    study.metadata <- .create.other(study.metadata, "units")
     # Site
-    if(!identical(c("id","year","name","lat","long","address","other"), names(site.metadata)))
+    if(!all(c("id","year","name","lat","long","address","area") %in% names(site.metadata)))
         stop("Incorrectly formatted site meta-data")
     if(length(intersect(unique(site.id), site.metadata$id)) != nrow(site.metadata))
         stop("Site meta-data must contain information about all sites")
     if(length(intersect(site.metadata$id,unique(site.id))) != nrow(site.metadata))
         stop("Site meta-data must only contain information about present sites")
-    if(!all(is.na(site.metadata$other)))
-        site.metadata$other <- apply(sapply(seq_along(names(site.metadata$other)), function(y) paste(names(site.metadata$other)[y],site.metadata$other[,y],sep=":")), 1, paste, collapse=";")
+    site.metadata <- .create.other(site.metadata, c("id","year","name","lat","long","address","area"))
     # Species
-    if(!identical(c("species","taxonomy","other"), names(species.metadata)))
+    if(!all(c("species","taxonomy") %in% names(species.metadata)))
         stop("Incorrectly formatted species meta-data")
     if(length(intersect(unique(species), species.metadata$species)) != nrow(species.metadata))
         stop("Species meta-data must contain information about all species")
     if(length(intersect(species.metadata$species,unique(species))) != nrow(species.metadata))
         stop("Species meta-data must only contain information about present species")
-    if(!all(is.na(species.metadata$other)))
-        species.metadata$other <- apply(sapply(seq_along(names(species.metadata$other)), function(y) paste(names(species.metadata$other)[y],species.metadata$other[,y],sep=":")), 1, paste, collapse=";")
-
+    species.metadata <- .create.other(species.metadata, c("species","taxonomy"))
+    
     ######################
     # Format and return ##
     ######################
@@ -101,6 +113,10 @@
         site.metadata=site.metadata,
         study.metadata=study.metadata
     )
+    for(i in seq_along(output))
+        for(j in seq_len(ncol(output[[i]])))
+            if(is.factor(output[[i]][,j]))
+                output[[i]][,j] <- as.character(output[[i]][,j])
     class(output) <- "nacdb"
     return(output)
 }

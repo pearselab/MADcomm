@@ -13,17 +13,21 @@
     comm[is.na(comm)] <- 0
     year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
     name <- substr(rownames(comm), 1, 4)
-    return(.matrix.melt(comm, data.frame(units="#", other=NA), data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",other=NA), data.frame(species=colnames(comm),taxonomy=NA,other=NA)))
+    return(.matrix.melt(comm, data.frame(units="#"), data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",area="1m2"), data.frame(species=colnames(comm),taxonomy=NA)))
 }
 
 # Species counts of different quads on various years
 .anderson.2011 <- function(...){
-    data <- read.csv(suppdata("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"))
-    data$plot_year <- paste(anderson$quad, anderson$year, sep = "_")
+    data <- read.csv(suppdata("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"), as.is=TRUE)
+    data$plot_year <- with(data, paste(quad, year, sep = "_"))
+    year <- as.numeric(paste0("19",as.character(data$year)))[!duplicated(data$plot_year)]
+    site.id <- unique(data$plot_year)
+    name <- data$quad[!duplicated(data$plot_year)]
     data <- data[order(data$species), c(3, 5, 4)]
-    return (data)
+    return (.df.melt(data$species, data$plot_year, data$count, data.frame(units="#",treatment="grazing"), data.frame(id=site.id,year,name,lat=NA,long=NA,address="northern mixed prairie in Miles City, Montana, USA",area="1m2"), data.frame(species=unique(data$species),taxonomy=NA)))
 }
 
+if(FALSE){
 .baldridge.2013 <- function(...){
     #Done. Site IDs in original data is nonconsequential. 
     abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
@@ -275,4 +279,5 @@
     data <- rbindlist(data)
     t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
     data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
+}
 }
