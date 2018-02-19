@@ -89,9 +89,10 @@ print.nacdb <- function(x, ...){
     # Create a simple summary matrix of species and sites in x
     n.species <- length(unique(species(x)))
     n.sites <- length(unique(sites(x)))
-
+    n.total <- nrow(x$data)
+    
     # Print it to screen
-    cat("\n A Community DataBase containing:\n", n.species, " species (columns)\n", n.sites, " sites (rows)\n")
+    cat("\nA Community DataBase containing:\nSpecies  : ", n.species, "\nSites    : ", n.sites, "\nTotal    : ", n.total,"\n")
     invisible(setNames(c(n.species,n.sites), c("n.species","n.sites")))
 }
 
