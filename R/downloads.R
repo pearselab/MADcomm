@@ -53,6 +53,7 @@
         output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
     output <- do.call(rbind, output)
     output$id <- with(output, paste(site, month, sep="_"))
+    output <- na.omit(output)
     
     # Add meta-data and return
     site.data <- nneo_sites()
@@ -88,6 +89,7 @@
         output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
     output <- do.call(rbind, output)
     output$id <- with(output, paste(plotID, year, sep="_"))
+    output <- na.omit(output)
     
     # Add meta-data and return
     site.data <- nneo_sites()
@@ -132,6 +134,7 @@
         output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
     output <- do.call(rbind, output)
     output$id <- with(output, paste(plotID, year, sep="_"))
+    output <- na.omit(output)
     
     # Add meta-data and return
     site.data <- nneo_sites()

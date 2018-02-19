@@ -70,6 +70,7 @@ nacdb <- function(cache, datasets, delay=5){
             saveRDS(output[[i]], path)
         Sys.sleep(delay)
     }
+    
     # Merge data and return
     output <- list(
         data=do.call(rbind, lapply(output, function(x) x$data)),
