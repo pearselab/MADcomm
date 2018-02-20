@@ -13,7 +13,10 @@
     comm[is.na(comm)] <- 0
     year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
     name <- substr(rownames(comm), 1, 4)
-    return(.matrix.melt(comm, data.frame(units="#"), data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",area="1m2"), data.frame(species=colnames(comm),taxonomy=NA)))
+    return(.matrix.melt(comm, 
+                        data.frame(units="area"),
+                        data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",area="1m2"), 
+                        data.frame(species=colnames(comm),taxonomy=NA)))
 }
 
 # Species counts of different quads on various years
@@ -24,40 +27,39 @@
     site.id <- unique(data$plot_year)
     name <- data$quad[!duplicated(data$plot_year)]
     data <- data[order(data$species), c(3, 5, 4)]
-    return (.df.melt(data$species, data$plot_year, data$count, data.frame(units="#",treatment="grazing"), data.frame(id=site.id,year,name,lat=NA,long=NA,address="northern mixed prairie in Miles City, Montana, USA",area="1m2"), data.frame(species=unique(data$species),taxonomy=NA)))
-}
-
-if(FALSE){
-.baldridge.2013 <- function(...){
-    #Done. Site IDs in original data is nonconsequential. 
-    abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
-    site_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
-    new.site_data <- with(site_data, data.frame(Site_ID = Site_ID, Site_Name = paste(Site_Name, Collection_Year, sep = "_")))
-    new.site_data <- na.omit(new.site_data)
-    data <- with(abundance_data, data.frame(species = paste(Family,Genus, Species, sep = "_"), plot = Site_ID, count = Abundance))
-    data$plot<-new.site_data$Site_Name[match(data$plot, new.site_data$Site_ID)]
-    new.data <- with(data, tapply(count, list(plot, species), sum))
-    new.data[is.na(new.data)] <- 0
-    new.data <- new.data[-1,]
-    return(.matrix.melt(new.data))
+    return (.df.melt(data$species, 
+                     data$plot_year, 
+                     data$count, 
+                     data.frame(units="#", treatment="grazing"), 
+                     data.frame(id=site.id, year,name,lat=NA,long=NA, address="northern mixed prairie in Miles City, Montana, USA", area="1m2"), 
+                     data.frame(species=unique(data$species),taxonomy=NA)))
 }
 
 .chu.2013 <- function(...){
-    #contains plant species and a count, but no location
     data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
+    site.info <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "quad_info.csv"))
     colnames(data) <- tolower(colnames(data))
-    data$plot_year <- paste(data$quad, data$year, sep = "_")
+    data$plot_year <- paste(data$quad, data$year, sep = ".")
     #Combines rows of similar species and plotyear into one row
-    comm <- with(data, tapply(area, list(species, plot_year), sum, na.rm=TRUE))
-    return(.matrix.melt(comm))
+    comm <- with(data, tapply(area, list(plot_year, species), sum, na.rm=TRUE))
+    plots_years <- unlist(strsplit(rownames(comm), ".", fixed=T))
+    plots <- plots_years[seq(1,length(plots_years), 2)]
+    years <- plots_years[seq(2,length(plots_years), 2)]
+    latitude <- site.info$latitude[match(plots, site.info$quadrat)]
+    longitude <- site.info$longitude[match(plots, site.info$quadrat)]
+    comm[is.na(comm)] <- 0
+    return(.matrix.melt(comm, 
+                        data.frame(units="area"), 
+                        data.frame(id=rownames(comm), year=years, name=plots, lat=latitude, long=longitude, address="Central Plains Experimental Range in Nunn, Colorado, USA", area="1m2"),
+                        data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
 .lynch.2013 <- function(...){
-    #Accumulation of 19 years of seabird population abundance data collected by the Antarctic Site Inventory. 
     full.data <- read.csv(suppdata("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
+    full.data$Site_name <- gsub("[^A-Za-z0-9_.]", "", full.data$Site_name)
     data <- full.data[,c(3,6,8,9)]
     data$site<-with(data, paste(Site_name, Season, sep = "_"))
-    data$Count[data$Count>0]<-1
+    data$Count[data$Count>0] <- 1
     data$Species <- sub("GEPE", "Pygoscelis_papua", data$Species)
     data$Species <- sub("ADPE", "Pygoscelis_adeliae", data$Species)
     data$Species <- sub("CHPE", "Pygoscelis_antarctica", data$Species)
@@ -68,17 +70,119 @@ if(FALSE){
     new.data <- with(data, tapply(Count, list(site, Species), sum))
     new.data[is.na(new.data)] <- 0
     new.data[new.data > 0] <- 1
+    plots_years <- unlist(strsplit(rownames(new.data), "_", fixed=T))
+    plots <- plots_years[seq(1,length(plots_years), 2)]
+    years <- plots_years[seq(2,length(plots_years), 2)]
+    latitude <- full.data$Latitude[match(plots, full.data$Site_name)]
+    longitude <- full.data$Longitude[match(plots, full.data$Site_name)]
 
-    return(.matrix.melt(data))
+    return(.matrix.melt(new.data, 
+                        data.frame(units="#"), 
+                        data.frame(id=rownames(new.data), year=years, name=plots, lat=latitude, long=longitude, address="Antarctic Site Inventory", area=NA),
+                        data.frame(species=colnames(new.data), taxonomy="Spheniscidae")))
 }
 
-.helmus.2013 <- function(...){
-    library(pez) # This isn't how we declare packages in 'real'
-                 # packages for the time being this is sufficient
-    data(Laja)
-    return(.matrix.melt(invert.sites))
+.broadway.2015 <- function(...){
+    #Fish abundance data for Wabash River for years 1974 - 2008.
+    data <- read.xls(suppdata("10.1371/journal.pone.0124954", 1))
+    data$Presence <- 1
+    new.data <- with(data, tapply(Presence, list(Year, Species), sum))
+    colnames(new.data) <- gsub(" ", "_", colnames(new.data))
+    site <- "wabash.river"
+    years <- rownames(new.data)
+    rownames(new.data) <- paste(site, rownames(new.data), sep="_")
+    new.data[is.na(new.data)] <- 0
+    return(.matrix.melt(new.data,
+                        data.frame(units="#"),
+                        data.frame(id=rownames(new.data), year=years, name=site, lat=NA, long=NA, address="Wabash River, Midwest, USA", area=NA),
+                        data.frame(species=colnames(new.data), taxonomy="Chordata")))
 }
 
+clean.predicts <- function(data) {
+    data.temp <- data[which(data$Genus != ""),]
+    data.temp$Genus <- as.character(data.temp$Genus)
+    data.temp$Species <- as.character(data.temp$Species)
+    data.temp$Species[which(data.temp$Species == "")] <- "spp."
+    data.temp$species <- with(data.temp, paste(Genus, Species, sep="_"))
+    data.temp$sites <- with(data.temp, paste(Site_name, Site_number, sep="_"))
+    sites <- with(data.temp, paste(Site_name, Site_number, sep="_"))
+    year <- format(as.Date(data.temp$Sample_start_earliest, format="%Y-%m-%d"),"%Y")
+    data.temp$site_year <- paste(sites, year, sep="_")
+    return(data.temp)
+}
+
+.predicts.2016a <- function(...) {
+    download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts_abundance.RDS")
+    data <- readRDS("predicts_abundance.RDS")
+    data <- data[which(data[,6] == "abundance"),]
+    data <- clean.predicts(data)
+    year <- format(as.Date(data$Sample_start_earliest[!duplicated(data$site_year)], format="%Y-%m-%d"),"%Y")
+    site.id <- unique(data$site_year)
+    name <- data$sites[!duplicated(data$site_year)]
+    long <- data$Longitude[!duplicated(data$site_year)]
+    lat <- data$Latitude[!duplicated(data$site_year)]
+    return(.df.melt(data$species,
+                    data$site_year,
+                    data$Measurement,
+                    data.frame(units="#"), 
+                    data.frame(id=site.id, year=year, name=name, lat, long, address=NA, area=NA), 
+                    data.frame(species=unique(data$species), taxonomy=NA)))
+}
+
+.predicts.2016b <- function(...) {
+    download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
+    data <- readRDS("predicts.RDS")
+    data <- data[which(data[,6] == "occurrence"),]
+    data <- clean.predicts(data)
+    year <- format(as.Date(data$Sample_start_earliest[!duplicated(data$site_year)], format="%Y-%m-%d"),"%Y")
+    site.id <- unique(data$site_year)
+    name <- data$sites[!duplicated(data$site_year)]
+    long <- data$Longitude[!duplicated(data$site_year)]
+    lat <- data$Latitude[!duplicated(data$site_year)]
+    return(.df.melt(data$species,
+                    data$site_year,
+                    data$Measurement,
+                    data.frame(units="area"), 
+                    data.frame(id=site.id, year, name, lat, long, address=NA, area=NA), 
+                    data.frame(species=unique(data$species), taxonomy=NA)))
+}
+
+.predicts.2016c <- function(...) {
+    download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
+    data <- readRDS("predicts.RDS")
+    data <- data[which(data[,6] == "percent cover"),]
+    data <- clean.predicts(data)
+    year <- format(as.Date(data$Sample_start_earliest[!duplicated(data$site_year)], format="%Y-%m-%d"),"%Y")
+    site.id <- unique(data$site_year)
+    name <- data$sites[!duplicated(data$site_year)]
+    long <- data$Longitude[!duplicated(data$site_year)]
+    lat <- data$Latitude[!duplicated(data$site_year)]
+    return(.df.melt(data$species,
+                    data$site_year,
+                    data$Measurement,
+                    data.frame(units="biomass"), 
+                    data.frame(id=site.id, year, name, lat, long, address=NA, area=NA), 
+                    data.frame(species=unique(data$species), taxonomy=NA)))
+}
+
+.predicts.2016d <- function(...) {
+    download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
+    data <- readRDS("predicts.RDS")
+    data <- data[which(data[,6] == "biomass"),]
+    data <- clean.predicts(data)
+    year <- format(as.Date(data$Sample_start_earliest[!duplicated(data$site_year)], format="%Y-%m-%d"),"%Y")
+    site.id <- unique(data$site_year)
+    name <- data$sites[!duplicated(data$site_year)]
+    long <- data$Longitude[!duplicated(data$site_year)]
+    lat <- data$Latitude[!duplicated(data$site_year)]
+    return(.df.melt(data$species,
+                    data$site_year,
+                    data$Measurement,
+                    data.frame(units="p/a"), 
+                    data.frame(id=site.id, year, name, lat, long, address=NA, area=NA), 
+                    data.frame(species=unique(data$species), taxonomy=NA)))
+}
+if(FALSE){
 # Data of plant cover in 100m^2 plots from various years. Cover codes 1-9 represented percentage
 # - ranges within the data. The median percentages were taken for each of the cover codes and used
 # - as the quantity
@@ -97,7 +201,36 @@ if(FALSE){
     spec_codes <- read.csv(suppdata("E091-124", "TGPP_specodes.csv", from = "esa_archives"))
     spec_codes <- with(spec_codes, setNames(paste(genus, species, sep = " "), spcode))
     data$species <- spec_codes[data$species]
-    return(data)
+    data$species[is.na(data$species)] <- "spp."
+    site.id <- unique(plot.year)
+    plots <- site.id[seq(1,length(site.id), 2)]
+    years <- site.id[seq(2,length(site.id), 2)]
+    return(.df.melt(data$species, data$plot_year, data$cover, 
+                    data.frame(units="area"), 
+                    data.frame(id=site.id, year=year, name=plots, lat=NA, long=NA, address="Tallgrass Prairie Preserve in Osage County, Oklahoma, USA", area=NA),
+                    data.frame(species=unique(data$species), taxonomy="plantae")))
+}
+
+.baldridge.2013 <- function(...){
+    #Done. Site IDs in original data is nonconsequential. 
+    abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
+    site_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
+    new.site_data <- with(site_data, data.frame(Site_ID = Site_ID, Site_Name = paste(Site_Name, Collection_Year, sep = "_")))
+    new.site_data <- na.omit(new.site_data)
+    data <- with(abundance_data, data.frame(species = paste(Family,Genus, Species, sep = "_"), plot = Site_ID, count = Abundance))
+    data$plot<-new.site_data$Site_Name[match(data$plot, new.site_data$Site_ID)]
+    new.data <- with(data, tapply(count, list(plot, species), sum))
+    new.data[is.na(new.data)] <- 0
+    new.data <- new.data[-1,]
+     return(.matrix.melt(new.data, data.frame(units="#"),
+                         data.frame(id=rownames(new.data),)))
+}
+
+.helmus.2013 <- function(...){
+    library(pez) # This isn't how we declare packages in 'real'
+                 # packages for the time being this is sufficient
+    data(laja)
+    return(.matrix.melt(invert.sites))
 }
 
 .thibault.2011 <- function(...){
@@ -117,20 +250,19 @@ if(FALSE){
 }
 
 .chamailleJammes.2016 <- function(...){
-    data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1))
+    data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1), stringsAsFactors=FALSE)
+    years <- (1992:2005)[-6] # Study excluded the year of 1997
+    for (year in seq_along(years))
+        site_year <- sapply(data$WATERHOLE, paste, years[year], sep="_")
     data <- aggregate(. ~ WATERHOLE, data = data, FUN=sum)
-    rownames(data) <- data$WATERHOLE
-    data[,1] <- NULL
-    return(.matrix.melt(data))
-}
-
-.broadway.2015 <- function(...){
-    #Fish abundance data for Wabash River for years 1974 - 2008.
-    data <- read.xls(suppdata("10.1371/journal.pone.0124954", 1))
-    data$Presence <- 1
-    new.data <- with(data, tapply(Presence, list(Year, Species), sum))
-    new.data[is.na(new.data)] <- 0
-    return(.matrix.melt(new.data))
+    species <- colnames(data)
+    data <- reshape(data, varying = list(names(data)[2:ncol(data)]), v.names = "Count", 
+                      idvar = "WATERHOLE", times = c("ELEPHANT", "GIRAFFE", "IMPALA","KUDU",
+                      "ROAN", "SABLE", "WILDEBEEST", "ZEBRA"), timevar = "species", direction = "long")
+    return(.df.melt(data$species, data$WATERHOLE, data$Count, 
+                    data.frame(units="#"),
+                    data.frame(id=, lat=, long=, address="Hwange National Park, Zimbabwe"),
+                    data.frame(species=unique(data$species, taxonomy="Mammalia"))))
 }
 
 .andradiBrown.2016 <- function(...){
