@@ -27,12 +27,228 @@
     site.id <- unique(data$plot_year)
     name <- data$quad[!duplicated(data$plot_year)]
     data <- data[order(data$species), c(3, 5, 4)]
+<<<<<<< HEAD
     return (.df.melt(data$species, 
                      data$plot_year, 
                      data$count, 
                      data.frame(units="#", treatment="grazing"), 
                      data.frame(id=site.id, year,name,lat=NA,long=NA, address="northern mixed prairie in Miles City, Montana, USA", area="1m2"), 
                      data.frame(species=unique(data$species),taxonomy=NA)))
+=======
+    return (.df.melt(data$species, data$plot_year, data$count, data.frame(units="#",treatment="grazing"), data.frame(id=site.id,year,name,lat=NA,long=NA,address="northern mixed prairie in Miles City, Montana, USA",area="1m2"), data.frame(species=unique(data$species),taxonomy=NA)))
+}
+
+# NEON wrappers
+# - all of these could use a bit of DRY love; there's a lot of repetition. A task for another day...
+# Mammals
+#' @importFrom nneo nneo_sites nneo_product nneo_data
+.neon.2018a <- function(...){
+    # Internal wrapper
+    .site <- function(month, site){
+        possible <- nneo_data("DP1.10072.001", site, month, "simple")$data$files
+        url <- grep(paste0("mam_pertrapnight\\.",month,"\\.basic"), possible$url, value=TRUE)
+        if(length(url) > 0){
+            data <- read.csv(url, as.is=TRUE)[,c("scientificName", "weight")]
+            data <- data[data$scientificName != "",]
+            data$weight[is.na(data$weight)] <- -1
+            data$month <- month; data$site <- site
+            return(data)
+        }
+        return(NULL)
+    }
+
+    # Get site data
+    metadata <- nneo_product("DP1.10072.001")$siteCodes
+    output <- vector("list", length(metadata$siteCode))
+    for(i in seq_along(metadata$siteCode))
+        output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
+    output <- do.call(rbind, output)
+    output$id <- with(output, paste(site, month, sep="_"))
+    output <- na.omit(output)
+    
+    # Add meta-data and return
+    site.data <- nneo_sites()
+    site.df <- output[!duplicated(output$id),]
+    site.df$lat <- site.data$siteLatitude[match(site.df$site, site.data$siteCode)]
+    site.df$long <- site.data$siteLongitude[match(site.df$site, site.data$siteCode)]
+    site.df$address <- NA; site.df$area <- "10 sherman traps"
+    names(site.df)[names(site.df)=="month"] <- "year"
+    names(site.df)[names(site.df)=="site"] <- "name"
+    site.df$scientificName <- site.df$weight <- NULL
+    return (.df.melt(output$scientificName, output$id, output$weight, data.frame(units="g"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
+}
+# Beetles
+.neon.2018b <- function(...){
+    # Internal wrapper
+    .site <- function(month, site){
+        possible <- nneo_data("DP1.10022.001", site, month, "simple")$data$files
+        url <- grep(paste0("expertTaxonomistIDProcessed\\.",month,"\\.basic"), possible$url, value=TRUE)
+        if(length(url) > 0){
+            data <- read.csv(url, as.is=TRUE)[,c("scientificName","plotID"), drop=FALSE]
+            data$abundance <- -1
+            data <- aggregate(.~plotID+scientificName, data=data, FUN=length)
+            data$year <- month; data$neon.site <- site
+            return(data)
+        }
+        return(NULL)
+    }
+
+    # Get site data
+    metadata <- nneo_product("DP1.10022.001")$siteCodes
+    output <- vector("list", length(metadata$siteCode))
+    for(i in seq_along(metadata$siteCode))
+        output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
+    output <- do.call(rbind, output)
+    output$id <- with(output, paste(plotID, year, sep="_"))
+    output <- na.omit(output)
+    
+    # Add meta-data and return
+    site.data <- nneo_sites()
+    site.df <- output[!duplicated(output$id),]
+    site.df$lat <- site.data$siteLatitude[match(site.df$neon.site, site.data$siteCode)]
+    site.df$long <- site.data$siteLongitude[match(site.df$neon.site, site.data$siteCode)]
+    site.df$address <- NA; site.df$area <- "pitfall trap"
+    names(site.df)[names(site.df)=="plotID"] <- "name"
+    site.df$scientificName <- site.df$weight <- NULL
+    return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
+}
+# Plants
+.neon.2018c <- function(...){
+    # Internal wrapper
+    .site <- function(month, site){
+        possible <- nneo_data("DP1.10098.001", site, month, "simple")$data$files
+        url <- grep(paste0("apparentindividual\\.",month,"\\.basic"), possible$url, value=TRUE)
+        if(length(url) > 0){
+            data <- read.csv(url, as.is=TRUE)[,c("individualID","plotID", "plantStatus")]
+            data <- data[grep("Live",data$plantStatus),]
+            if(nrow(data)>0){
+                # Load lookup; correct for mistakes by sorting on date (see readme of NEON data)
+                lookup <- read.csv(grep("mappingandtagging.basic", possible$url, value=TRUE, fixed=TRUE), as.is=TRUE)
+                lookup <- lookup[order(lookup$date,decreasing=TRUE),]
+                lookup <- lookup[!duplicated(lookup$individualID),]
+                lookup <- lookup[,c("scientificName","individualID")]
+                data <- merge(data, lookup, "individualID")
+                data$scientificName <- sapply(strsplit(data$scientificName, " "), function(x) paste(x[1:2], collapse="_"))
+                data$plantStatus <- NULL; data$abundance <- -1
+                data <- aggregate(.~plotID+scientificName, data=data, FUN=length)
+                data$neon.site <- site; data$year <- month
+                return(data)
+            }
+        }
+        return(NULL)
+    }
+
+    # Get site data
+    metadata <- nneo_product("DP1.10098.001")$siteCodes
+    output <- vector("list", length(metadata$siteCode))
+    for(i in seq_along(metadata$siteCode))
+        output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
+    output <- do.call(rbind, output)
+    output$id <- with(output, paste(plotID, year, sep="_"))
+    output <- na.omit(output)
+    
+    # Add meta-data and return
+    site.data <- nneo_sites()
+    site.df <- output[!duplicated(output$id),]
+    site.df$lat <- site.data$siteLatitude[match(site.df$neon.site, site.data$siteCode)]
+    site.df$long <- site.data$siteLongitude[match(site.df$neon.site, site.data$siteCode)]
+    site.df$address <- NA; site.df$area <- "1m2"
+    names(site.df)[names(site.df)=="plotID"] <- "name"
+    site.df$scientificName <- site.df$weight <- NULL
+    return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
+}
+
+
+if(FALSE){
+    # Do work
+    site.metadata <- nneo_sites(); sites <- site.metadata$siteCode
+    output <- vector("list", length(sites))
+    for(i in seq_along(sites)){
+        site.data <- nneo_site(sites[i])$dataProducts
+        if(length(site.data)>0){
+            site.data <- site.data[site.data$dataProductCode %in% "DP1.10072.001",]
+            output[[i]] <- vector("list", nrow(site.data))
+            for(j in seq_len(nrow(site.data)))
+                output[[i]][[j]] <- do.call(rbind, lapply(unlist(site.data$availableMonths[j]), product.codes[site.data$dataProductCode[j]][[1]], site=sites[i]))
+        }
+}
+
+    
+
+
+.neon.mammals <- function(month, site){
+    possible <- nneo_data("DP1.10072.001", site, month, "simple")$data$files
+    url <- grep(paste0("mam_pertrapnight\\.",month,"\\.basic"), possible$url, value=TRUE)
+    data <- read.csv(url, as.is=TRUE)[,c("scientificName", "weight")]
+    data <- data[data$scientificName != "",]
+    data$weight[is.na(data$weight)] <- -1
+    data$month <- month; data$site <- site
+    return(data)
+}
+.neon.beetles <- function(month, site){
+    site <- "ABBY"; month <- "2016-09"
+    possible <- nneo_data("DP1.10022.001", site, month, "simple")$data$files
+    url <- grep(paste0("expertTaxonomistIDProcessed\\.",month,"\\.basic"), possible$url, value=TRUE)
+    data <- read.csv(url, as.is=TRUE)[,c("scientificName"), drop=FALSE]
+    data$month <- month; data$site <- site
+    return(data)
+}
+.neon.plants <- function(month, site){
+    site <- "SJER"; month <- "2015-04"
+    possible <- nneo_data("DP1.10098.001", site, month, "simple")$data$files
+    url <- grep(paste0("apparentindividual\\.",month,"\\.basic"), possible$url, value=TRUE)
+    data <- read.csv(url, as.is=TRUE)[,c("individualID","plotID", "plantStatus")]
+    data <- data[grep("Live",data$plantStatus),]
+    # Load lookup; correct for mistakes by sorting on date (see readme of NEON data)
+    lookup <- read.csv(grep("mappingandtagging.basic", possible$url, value=TRUE, fixed=TRUE), as.is=TRUE)
+    lookup <- lookup[order(lookup$date,decreasing=TRUE),]
+    lookup <- lookup[!duplicated(lookup$individualID),]
+    lookup <- lookup[,c("scientificName","individualID")]
+    data <- merge(data, lookup, "individualID")
+    data$scientificName <- sapply(strsplit(data$scientificName, " "), function(x) paste(x[1:2], collapse="_"))
+    data <- aggregate(.~plotID+scientificName, data=data, FUN=length)
+    names(data)[3] <- "abundance"
+    return(data[,1:3])
+}
+
+site.metadata <- nneo_sites()
+sites <- site.metadata$siteCode
+product.codes <- setNames(c(.neon.beetles,.neon.mammals,.neon.plants), c("DP1.10022.001","DP1.10072.001","DP1.10098.001"))
+output <- vector("list", length(sites))
+for(i in seq_along(sites)){
+    site.data <- nneo_site(sites[i])$dataProducts
+    if(length(site.data)>0){
+        site.data <- site.data[site.data$dataProductCode %in% names(product.codes),]
+        output[[i]] <- vector("list", nrow(site.data))
+        for(j in seq_len(nrow(site.data)))
+            output[[i]][[j]] <- do.call(rbind, lapply(unlist(site.data$availableMonths[j]), product.codes[site.data$dataProductCode[j]][[1]], site=sites[i]))
+    }
+}
+
+"DP1.10098.001"
+"DP1.10098.001"
+
+# NEON Plants
+#' @importFrom nneo nneo_data
+.neon.2018a <- function(...){
+
+}
+}
+
+if(FALSE){
+.baldridge.2013 <- function(...){
+    #Done. Site IDs in original data is nonconsequential. 
+    abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
+    site_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
+    new.site_data <- with(site_data, data.frame(Site_ID = Site_ID, Site_Name = paste(Site_Name, Collection_Year, sep = "_")))
+    new.site_data <- na.omit(new.site_data)
+    data <- with(abundance_data, data.frame(species = paste(Family,Genus, Species, sep = "_"), plot = Site_ID, count = Abundance))
+    data$plot<-new.site_data$Site_Name[match(data$plot, new.site_data$Site_ID)]
+    new.data <- with(data, tapply(count, list(plot, species), sum))
+    new.data[is.na(new.data)] <- 0
+    new.data <- new.data[-1,]
+    return(.matrix.melt(new.data))
+>>>>>>> 0731629d28c5c9fb9fb4a35c5add894f1706780b
 }
 
 .chu.2013 <- function(...){
