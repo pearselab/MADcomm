@@ -500,37 +500,39 @@ if(FALSE){
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
-.fia <- function(...){
-    .get.fia <- function(state, var){
-        zip <- file.path("raw_data","fia_zips",paste0(state,"_",var,".zip"))
-        csv <- file.path("raw_data","fia_zips",paste0(state,"_",var,".csv"))
-        .download(paste0("http://apps.fs.fed.us/fiadb-downloads/",state,"_",var,".zip"), zip)
-        .unzip(zip, paste0(state,"_",var,".csv"), csv)
+}
+if(FALSE){
+.fia.2018 <- function(...){
+    .get.fia <- function(state, var, select){
+        t.zip <- tempfile()
+        download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
+        unzip(t.zip)
+        data <- fread(paste0(state,"_",var,".csv"), select=select)
+        unlink(paste0(state,"_",var,".csv"))
+        return(data)
     }
-
-    #Download and load
-    states <- c("ME","NH","VT","MA","RI","CT","NY","NJ","DE","MD","VA","NC","SC","GA","FL","MS","AL","TN","KY","WV","OH","IN","IL","WI","MI")
-    #PA missed off!
+    
+    states <- c("PR","VI")#c("AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY", "AS","GU","MP","PW","PR","VI")
     data <- vector("list", length(states))
+    
     for(i in seq_along(states)){
         #Download/read in data
-        tree <- fread(.get.fia(states[i], "TREE"), select=c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
-        cond <- fread(.get.fia(states[i], "COND"), select=c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
-        plot <- fread(.get.fia(states[i], "PLOT"), select=c("PLOT","LAT","LON","ELEV", "CN"))
-
+        tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
+        cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
+        plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
+        
         #Subset everything, remove sites with multiple/ambiguous codings, merge
-        tree <- tree[INVYR==2010 & DIA > 1.96,]
-        cond <- cond[PLT_CN %in% names(Filter(function(x) x==1, table(cond$PLT_CN))),]
+        tree <- tree[tree$DIA > 1.96,]
+        cond <- cond[cond$PLT_CN %in% names(Filter(function(x) x==1, table(cond$PLT_CN))),]
         data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
         data[[i]]$state <- states[i]
-        
-        #Delete temporary files
-        unlink(.get.fia(states[i], "TREE"))
-        unlink(.get.fia(states[i], "COND"))
-        unlink(.get.fia(states[i], "PLOT"))
     }
     data <- rbindlist(data)
     t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
     data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
 }
+
+
+
+
 }
