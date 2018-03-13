@@ -657,7 +657,202 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy=NA)))
 }
 
+.boyle.2015 <- function(...) {
+    # This dataset is combining 23 years of observations at one site. They combine
+    # the counts (which are not in the dataset) to get the mean abundance across 
+    # <= 23 years...
+    # They also give the mean counts during selected years (89-94 and 06-11) so 
+    # I have used those instead...
+    data <- read.csv(suppdata("10.5061/dryad.65v10", "LaSelvaBirdTrendsDatatable.csv"), stringsAsFactors=FALSE)
+    data <- melt(data, id.vars=1,11:12)
+    data$site <- gsub("MeanCount", "LaSelvaBiologicalStation_CostaRica", data$variable)
+    return(.df.melt(data$ScientificName, data$site, data$value,
+                    data.frame(units="#"),
+                    data.frame(id=unique(data$site), year=c("89-94", "06-11"), name=NA, lat="10.422", long="-84.015", address="LaSelvaBiologicalStation_CostaRica", area=NA),
+                    data.frame(species=unique(data$ScientificName), taxonomy="Aves")))
+}
+
+.myster.2010 <- function(...){
+    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-luq/100/246250/f718e683c7c425207c7d1f7adeddf85f"
+    addr <- sub("^https","http", addr)
+    data <-read.csv(addr, header=F, skip=1, sep=",", col.names=c("date", "plot", "species", "percent.cover"), check.names=TRUE)
+    data$date <- format(as.Date(data$date, format="%d/%m/%Y"),"%Y")
+    data$plot.year <- with(data, paste(plot, date, sep="_"))
+    site.id <- unique(data$plot.year)
+    year <- data$date[!duplicated(data$plot.year)]
+    name <- data$plot[!duplicated(data$plot.year)]
+    return(.df.melt(data$species, data$plot.year, data$percent.cover,
+                    data.frame(units="area"),
+                    data.frame(id=site.id, year, name, lat="-65.8257", long="18.3382", address="Luquillo Experimental Forest, Puerto Rico, USA", area="2mX5m"),
+                    data.frame(species=unique(data$species), taxonomy="Plantae")))
+}
+
+.schmitt.2012 <- function(...){
+    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/46/3/4ded739e78e50552837cf100f251f7ab"
+    addr <- sub("^https","http",addr)
+    data <-read.csv(addr,header=F, skip=1, sep=",", quot='"',
+                    col.names=c("YEAR", "MONTH", "DATE", "SITE", "DEPTH", "REP",
+                                "SP_CODE", "COUNT", "COMMENTS", "Common_Name",
+                                "taxon_GROUP", "SURVEY", "taxon_PHYLUM",
+                                "taxon_CLASS", "taxon_ORDER", "taxon_FAMILY",
+                                "taxon_GENUS", "taxon_SPECIES"), check.names=TRUE)
+    data$species <- with(data, paste(taxon_GENUS, taxon_SPECIES, sep="_"))
+    data$site.year.depth <- with(data, paste(SITE, YEAR, DEPTH, sep="_"))
+    site.id <- unique(data$site.year.depth)
+    year <- data$YEAR[!duplicated(data$site.year.depth)]
+    name <- data$SITE[!duplicated(data$site.year.depth)]
+    return(.df.melt(data$species, data$site.year.depth, data$COUNT, 
+                    data.frame(units="#"),
+                    data.frame(id=site.id, year, name, lat=NA, long=NA, address="Santa Cruz Island, CA, USA", area=NA),
+                    data.frame(species=unique(data$species), taxonomy="Pycnopodia")))
+}
+
+.reed.2017a <- function(...) {
+    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/17/30/a7899f2e57ea29a240be2c00cce7a0d4"
+    addr <- sub("^https","http", addr)
+    data <-read.csv(addr, header=F, skip=1, sep=",",
+                    col.names=c("year","month","date","site","transect","quad",
+                                "side","sp_code","size","count","area","vis",
+                                "obs_code","survey_timing","notes","taxon_genus",
+                                "taxon_species","group","survey","taxon_kingdom",
+                                "taxon_phylum","taxon_class","taxon_order",
+                                "taxon_family","taxon_former_genus",
+                                "taxon_former_species","common_name",
+                                "substrate_type","mobility","growth_morph"), check.names=TRUE)
+    for (i in 1:nrow(data)){
+        if (data$count[i] < 0) {
+            data$count[i] <- 0
+        }
+        if (data$taxon_species[i] == -99999) {
+           data$taxon_species[i] <- NA
+        }
+        if (data$taxon_genus[i] == -99999) {
+           data$taxon_genus[i] <- NA
+        }
+    }
+    data$species <- with(data, paste(taxon_genus, taxon_species, sep="_"))
+    data$site <- with(data, paste(site, transect, sep="_"))
+    data$site_year <- with(data, paste(site, year, sep="_"))
+    data <- with(data, tapply(count, list(site_year, species), sum, na.rm = TRUE))
+    data[is.na(data)] <- 0
+    temp <- strsplit(rownames(data), "_")
+    year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
+    name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
+    return(.df.melt(data,
+                    data.frame(units="#"),
+                    data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
+                    data.frame(species=colnames(data), taxonomy=NA)))
+}
+
+.reed.2017b <- function(...) {
+    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/19/23/5daf0da45925ba9014872c6bc9f6c8bb"
+    addr <- sub("^https","http", addr)
+    data <-read.csv(addr,header=F, skip=1, sep=",",
+                    col.names=c("year","month","date","site","transect","side",
+                                "quad","sp_code","count","size","area","obs_code",
+                                "notes","taxon_genus","taxon_species","group","survey",
+                                "taxon_kingdom","taxon_phylum","taxon_class","taxon_order",
+                                "taxon_family","taxon_previous_genus","taxon_previous_species",
+                                "common_name","substrate_type","mobility","growth_morph"),
+                    check.names=TRUE)
+    for (i in 1:nrow(data)){
+        if (data$count[i] < 0) {
+            data$count[i] <- 0
+        }
+        if (data$taxon_species[i] == -99999) {
+           data$taxon_species[i] <- "spp."
+        }
+    }
+    data$species <- with(data, paste(taxon_genus, taxon_species, sep="_"))
+    data$site <- with(data, paste(site, transect, sep="_"))
+    data$site_year <- with(data, paste(site, year, sep="_"))
+    data <- with(data, tapply(count, list(site_year, species), sum, na.rm = TRUE))
+    data[is.na(data)] <- 0
+    temp <- strsplit(rownames(data), "_")
+    year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
+    name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
+    return(.df.melt(data,
+                    data.frame(units="#"),
+                    data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
+                    data.frame(species=colnames(data), taxonomy=NA)))
+}
+
+.nichols.2006 <- function(...) {
+    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-ntl/61/3/wgnhs_macrophyte_aquaplt2" 
+    addr <- sub("^https","http",addr) 
+    abundanceData <-read.csv(addr, header=F, skip=1, sep=",", quot='"',
+                             col.names=c("mwbc", "lake_unique", "lakename", 
+                                         "county", "county_id", "month", "year4", 
+                                         "spcode", "aqstano", "visual_abundance"),
+                             check.names=TRUE)
+    specAddr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-ntl/61/3/wgnhs_macrophyte_pltname" 
+    specAddr <- sub("^https","http",specAddr) 
+    specData <-read.csv(specAddr, header=F, skip=1, sep=",", quot='"', 
+                   col.names=c("spcode", "spec_no", "scientific_name", 
+                                "common_name", "lifeform", "spec_category", 
+                                "genus"), check.names=TRUE)
+    abundanceData$site.year <- with(abundanceData, paste(lakename, year4, sep=">"))
+    abundanceData$species <- specData$scientific_name[match(abundanceData$spcode, specData$spcode)]
+    data <- with(abundanceData, tapply(visual_abundance, list(site.year, species), sum, na.rm = TRUE))
+    data[is.na(data)] <- 0
+    temp <- unlist(strsplit(rownames(data), ">", fixed=T))
+    name <- temp[seq(1,length(temp), 2)]
+    year <- temp[seq(2,length(temp), 2)]
+    return(.matrix.melt(data, 
+                        data.frame(units="#"), 
+                        data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
+                        data.frame(species=colnames(data), taxonomy=NA)))
+}
+
+.wearn.2016a <- function(...) {
+    addr <- "https://zenodo.org/record/44545/files/Wearn2016_cameratrap_species-abundance_matrix.csv"
+    addr <- sub("^https","http",addr)
+    data <- read.csv(addr)
+    data <- aggregate(.~Location, data, sum)
+    rownames(data) <- data$Location
+    data <- data[,-1]
+    data <- as.matrix(data, row.names=rownames(data), colnames=colnames(data))
+    return(.matrix.melt(data, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), year=NA, name=rownames(data), lat=NA, long=NA, address="Sabah, Malaysian Borneo", area=NA),
+                        data.frame(species=colnames(data), taxonomy="Mammalia")))
+}
+
+.wearn.2016b <- function(...) {
+    addr <- "https://zenodo.org/record/44545/files/Wearn2016_livetrap_species-abundance_matrix.csv"
+    addr <- sub("^https","http",addr)
+    data <- read.csv(addr)
+    data <- aggregate(.~Location, data, sum)
+    rownames(data) <- data$Location
+    data <- data[,-1]
+    data <- as.matrix(data, row.names=rownames(data), colnames=colnames(data))
+    return(.matrix.melt(data, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), year=NA, name=rownames(data), lat=NA, long=NA, address="Sabah, Malaysian Borneo", area=NA),
+                        data.frame(species=colnames(data), taxonomy="Mammalia")))
+}
+
+.kaspari.2016 <- function(...) {
+    addr  <- "https://pasta.lternet.edu/package/data/eml/msb-tempbiodev/1111170/1/cfd3a55deef52e3a93469057053f5404" 
+    addr <- sub("^https", "http", addr)
+    data <-read.csv(addr, header=F, skip=1, sep=",", 
+                    col.names=c("location", "distance", "direction", 
+                                "plotcode", "taxon", "abundance"), 
+                                check.names=TRUE)
+    return(.df.melt(data$taxon, data$plotcode, data$abundance,
+                    data.frame(units="#"),
+                    data.frame(id=unique(data$plotcode), year="2016", name=unique(data$plotcode), lat=NA, long=NA, address=NA, area=NA),
+                    data.frame(species=unique(data$taxon), taxonomy="Arthropoda")))
+}
 if(FALSE){
+.albouy.2015 <- function(...) {
+    temp <- tempfile()
+    download.file("http://esapubs.org/archive/ecol/E096/203/Presence_absence_data.zip", temp)
+    data <- read.csv(unz(temp, "Observed_grid_1980.csv"))
+    unlink(temp)
+
+}
+
 .helmus.2013 <- function(...){
     library(pez) # This isn't how we declare packages in 'real'
                  # packages for the time being this is sufficient
@@ -690,6 +885,29 @@ if(FALSE){
                     data.frame(units="#"),
                     data.frame(id=, lat="18", long="26", address="Hwange National Park, Zimbabwe, Africa", area=NA),
                     data.frame(species=unique(data$species, taxonomy="Mammalia"))))
+}
+
+.coblentz.2015 <- function(...){
+    # This won't work on Windows OS. I might be wrong but I think that it has
+    # something to do with the spaces in the file name.
+    data <- read.xls(suppdata("10.5061/dryad.j2c13", "Invert Community Data 2012 RAW.xlsx"), stringsAsFactors=FALSE)
+    colnames(data) <- with(data, paste(colnames(data), data[3,], sep="_"))
+    data <- data[-1:-3,]
+    species <- data[,1]
+    data  <- data[,-1]
+    data <- sapply(data, as.numeric)
+    rownames(data) <- species
+    return(.matrix.melt(data))
+}
+
+.stapp.2013 <- function(...) {
+    infile  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sgs/137/17/c4cc7f18abefa0d98a356c6936710ab1" 
+    infile <- sub("^https","http",infile) 
+    data <-read.csv(infile, header=F, skip=1, sep="\t", 
+                    col.names=c("Sample", "Session", "Veg", "Day", "Month", 
+                                "Year", "Web", "Night", "Trap", "Capt", "Tag", 
+                                "Spp", "Age", "Sex", "Reprod", "WT", "notes", 
+                                "Stapp's.comments"), check.names=TRUE)
 }
 
 # - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
