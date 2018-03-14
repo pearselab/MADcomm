@@ -813,7 +813,7 @@ clean.predicts <- function(data) {
     data <- data[,-1]
     data <- as.matrix(data, row.names=rownames(data), colnames=colnames(data))
     return(.matrix.melt(data, 
-                        data.frame(units="#"),
+                        data.frame(units="#", method="cameraTrap"),
                         data.frame(id=rownames(data), year=NA, name=rownames(data), lat=NA, long=NA, address="Sabah, Malaysian Borneo", area=NA),
                         data.frame(species=colnames(data), taxonomy="Mammalia")))
 }
@@ -827,7 +827,7 @@ clean.predicts <- function(data) {
     data <- data[,-1]
     data <- as.matrix(data, row.names=rownames(data), colnames=colnames(data))
     return(.matrix.melt(data, 
-                        data.frame(units="#"),
+                        data.frame(units="#", method="liveTrap"),
                         data.frame(id=rownames(data), year=NA, name=rownames(data), lat=NA, long=NA, address="Sabah, Malaysian Borneo", area=NA),
                         data.frame(species=colnames(data), taxonomy="Mammalia")))
 }
@@ -844,6 +844,66 @@ clean.predicts <- function(data) {
                     data.frame(id=unique(data$plotcode), year="2016", name=unique(data$plotcode), lat=NA, long=NA, address=NA, area=NA),
                     data.frame(species=unique(data$taxon), taxonomy="Arthropoda")))
 }
+
+.phillips.2003 <- function(...) {
+    temp <- tempfile()
+    download.file("https://www.forestplots.net/upload/data-packages/phillips-et-al-2015/PeruTransectData.zip", temp)
+    data <- read.csv(unzip(temp, files="PeruTransectData/DataPeruTransects/IndividualData.csv"))
+    unlink(temp)
+    temp <- tempfile()
+    download.file("https://www.forestplots.net/upload/data-packages/phillips-et-al-2015/PeruTransectData.zip", temp)
+    plotData <- read.csv(unzip(temp, files="PeruTransectData/DataPeruTransects/PlotInformationforRPackage.csv"))
+    unlink(temp)
+    # The data is a census of all trees in a 0.1-ha plot that have a diameter at breast height > 10cm
+    # I turned this into an abundance matrix given that they have records for each of the trees of a particular size.
+    data$DBH1 <- 1
+    data$year <- substr(data$Census.Date, 1,4)
+    data$plot.year <- with(data, paste(Plot.Code, year, sep="_"))
+    tData <- with(data, tapply(DBH1, list(plot.year, Species), sum, na.rm=TRUE))
+    tData[is.na(tData)] <- 0
+    temp <- strsplit(rownames(tData), "_")
+    year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
+    name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
+    lat <- plotData$LatitudeDecimal[match(plotData$PlotCode, name)]
+    long <- plotData$LongitudeDecimal[match(plotData$PlotCode, name)]
+    return(.matrix.melt(tData, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(tData), year, name, lat, long, address="Eastern Madre de Dios, Peru, South America", area="0.1-ha"),
+                        data.frame(species=colnames(tData), taxonomy="Plantae")))
+} 
+
+.biotime.2018 <- function(...) {
+    data <- read.csv(url("https://zenodo.org/record/1095628/files/BioTIMEQuery_06_12_2017.csv"))
+    metadata <- read.csv(url("https://zenodo.org/record/1095628/files/BioTIMEMetadata_06_12_2017.csv"))
+    countStudies <- metadata$STUDY_ID[which(metadata$ABUNDANCE_TYPE == "Count")]
+    countData <- data[which(data$STUDY_ID %in% countStudies),]
+    countData$name <- with(countData, paste("Biotime", STUDY_ID, PLOT, sep="_"))
+    countData$plot.year <- with(countData, paste("Biotime", STUDY_ID, PLOT, YEAR, sep="_"))
+    countData$taxa <- metadata$TAXA[match(countData$STUDY_ID, metadata$STUDY_ID)]
+    countData <- .df.melt(countData$GENUS_SPECIES,
+                          countData$plot.year,
+                          countData$sum.allrawdata.ABUNDANCE,
+                          data.frame(units="#"),
+                          data.frame(id=unique(countData$plot.year), year=countData$YEAR[!duplicated(countData$plot.year)], 
+                                     name=countData$name[!duplicated(countData$plot.year)], lat=countData$LATITUDE[!duplicated(countData$plot.year)], 
+                                     long=countData$LONGITUDE[!duplicated(countData$plot.year)], address="NA", area="NA"),
+                          data.frame(species=unique(countData$GENUS_SPECIES), taxonomy=countData$taxa[!duplicated(countData$GENUS_SPECIES)]))
+    paStudies <- metadata$STUDY_ID[which(metadata$ABUNDANCE_TYPE == "Presence/Absence")]
+    paData <- data[which(data$STUDY_ID %in% paStudies),]
+    paData$name <- with(paData, paste("Biotime", STUDY_ID, PLOT, sep="_"))
+    paData$plot.year <- with(paData, paste("Biotime", STUDY_ID, PLOT, YEAR, sep="_"))
+    paData$taxa <- metadata$TAXA[match(paData$STUDY_ID, metadata$STUDY_ID)]
+    paData <- .df.melt(paData$GENUS_SPECIES,
+                       paData$plot.year,
+                       paData$sum.allrawdata.ABUNDANCE,
+                       data.frame(units="p/a"),
+                       data.frame(id=unique(paData$plot.year), year=paData$YEAR[!duplicated(paData$plot.year)], 
+                                  name=paData$name[!duplicated(paData$plot.year)], lat=paData$LATITUDE[!duplicated(paData$plot.year)], 
+                                  long=paData$LONGITUDE[!duplicated(paData$plot.year)], address="NA", area="NA"),
+                       data.frame(species=unique(paData$GENUS_SPECIES), taxonomy=paData$taxa[!duplicated(paData$GENUS_SPECIES)]))
+    return(mapply(rbind, countData, paData))
+}
+
 if(FALSE){
 .albouy.2015 <- function(...) {
     temp <- tempfile()
