@@ -729,3 +729,17 @@ if(FALSE){
 
 
 }
+
+if(FALSE){
+
+    .lamotte.1936 <- function(...){
+    species <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
+    .df.melt(species, 
+                     rep("49_Camp_NV_-15750000", length(species)),
+                     rep(1,length(species)), 
+                     data.frame(units="p/a", treatment="paleoecology"), 
+                     data.frame(id="49_Camp_NV_-15750000", year=-15750000, name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"), 
+                     data.frame(species=species,taxonomy=NA))
+
+    }
+}
