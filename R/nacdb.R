@@ -119,9 +119,9 @@ summary.nacdb <- function(x, ...){
     if(!missing(sites)){
         if(any(x$site.metadata$id %in% sites)){
             x$data <- x$data[x$data$site.id %in% sites,]
-            x$spp.metadata <- x$spp.metadata[x$spp.metadata %in% x$data$species,]
+            x$spp.metadata <- x$spp.metadata[x$spp.metadata$species %in% x$data$species,]
             x$site.metadata <- x$site.metadata[x$site.metadata$id %in% sites,]
-            x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
+            x$study.metadata <- x$study.metadata[x$study.metadata$study %in% x$data$study,]
         } else {
             return(null)
         }
@@ -131,16 +131,16 @@ summary.nacdb <- function(x, ...){
     if(!missing(spp)){
         if(any(x$spp.metadata$species %in% spp)){
             x$data <- x$data[x$data$species %in% spp,]
-            x$spp.metadata <- x$spp.metadata[x$spp.metadata %in% spp,]
-            x$site.metadata <- x$site.metadata[x$site.metadata %in% x$data$site,]
-            x$study.metadata <- x$study.metadata[x$study.metadata %in% x$data$study,]
+            x$spp.metadata <- x$spp.metadata[x$spp.metadata$species %in% spp,]
+            x$site.metadata <- x$site.metadata[x$site.metadata$id %in% x$data$site,]
+            x$study.metadata <- x$study.metadata[x$study.metadata$study %in% x$data$study,]
         } else {
             return(null)
         }
     }
 
     # Return (already checked for null case)
-    return(output)
+    return(x)
 }
 
 species <- function(x, ...){
@@ -165,4 +165,17 @@ citations <- function(x){
     nacdb.citations$Name <- with(nacdb.citations, paste0(".", tolower(Author), ".", Year))
 
     return(as.character(nacdb.citations$BibTeX.citation[match(datasets, nacdb.citations$Name)]))
+}
+
+#' @export
+subset.study <- function(x, studies){
+    if(!inherits(x, "nacdb"))
+        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+
+    x$data <- x$data[x$data$study %in% studies,]
+    x$spp.metadata <- x$spp.metadata[x$spp.metadata$study %in% studies,]
+    x$site.metadata <- x$site.metadata[x$site.metadata$study %in% studies,]
+    x$study.metadata <- x$study.metadata[x$study.metadata$study %in% studies,]
+
+    return(x)
 }

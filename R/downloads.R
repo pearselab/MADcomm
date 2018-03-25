@@ -3,10 +3,6 @@
 #####################
 
 #' @importFrom suppdata suppdata
-
-# Plotted land and area covered by various plant species. Repeat species in the same plot were combined into
-# - one row and the area covered were summed together
-# return a long format table of data
 .adler.2007 <- function(...){
     data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
     comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
@@ -19,7 +15,6 @@
                         data.frame(species=colnames(comm),taxonomy=NA)))
 }
 
-# Species counts of different quads on various years
 .anderson.2011 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"), as.is=TRUE)
     data$plot_year <- with(data, paste(quad, year, sep = "_"))
@@ -155,80 +150,6 @@
     return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 
-
-if(FALSE){
-    # Do work
-    site.metadata <- nneo_sites(); sites <- site.metadata$siteCode
-    output <- vector("list", length(sites))
-    for(i in seq_along(sites)){
-        site.data <- nneo_site(sites[i])$dataProducts
-        if(length(site.data)>0){
-            site.data <- site.data[site.data$dataProductCode %in% "DP1.10072.001",]
-            output[[i]] <- vector("list", nrow(site.data))
-            for(j in seq_len(nrow(site.data)))
-                output[[i]][[j]] <- do.call(rbind, lapply(unlist(site.data$availableMonths[j]), product.codes[site.data$dataProductCode[j]][[1]], site=sites[i]))
-        }
-}
-
-.neon.mammals <- function(month, site){
-    possible <- nneo_data("DP1.10072.001", site, month, "simple")$data$files
-    url <- grep(paste0("mam_pertrapnight\\.",month,"\\.basic"), possible$url, value=TRUE)
-    data <- read.csv(url, as.is=TRUE)[,c("scientificName", "weight")]
-    data <- data[data$scientificName != "",]
-    data$weight[is.na(data$weight)] <- -1
-    data$month <- month; data$site <- site
-    return(data)
-}
-.neon.beetles <- function(month, site){
-    site <- "ABBY"; month <- "2016-09"
-    possible <- nneo_data("DP1.10022.001", site, month, "simple")$data$files
-    url <- grep(paste0("expertTaxonomistIDProcessed\\.",month,"\\.basic"), possible$url, value=TRUE)
-    data <- read.csv(url, as.is=TRUE)[,c("scientificName"), drop=FALSE]
-    data$month <- month; data$site <- site
-    return(data)
-}
-.neon.plants <- function(month, site){
-    site <- "SJER"; month <- "2015-04"
-    possible <- nneo_data("DP1.10098.001", site, month, "simple")$data$files
-    url <- grep(paste0("apparentindividual\\.",month,"\\.basic"), possible$url, value=TRUE)
-    data <- read.csv(url, as.is=TRUE)[,c("individualID","plotID", "plantStatus")]
-    data <- data[grep("Live",data$plantStatus),]
-    # Load lookup; correct for mistakes by sorting on date (see readme of NEON data)
-    lookup <- read.csv(grep("mappingandtagging.basic", possible$url, value=TRUE, fixed=TRUE), as.is=TRUE)
-    lookup <- lookup[order(lookup$date,decreasing=TRUE),]
-    lookup <- lookup[!duplicated(lookup$individualID),]
-    lookup <- lookup[,c("scientificName","individualID")]
-    data <- merge(data, lookup, "individualID")
-    data$scientificName <- sapply(strsplit(data$scientificName, " "), function(x) paste(x[1:2], collapse="_"))
-    data <- aggregate(.~plotID+scientificName, data=data, FUN=length)
-    names(data)[3] <- "abundance"
-    return(data[,1:3])
-}
-
-site.metadata <- nneo_sites()
-sites <- site.metadata$siteCode
-product.codes <- setNames(c(.neon.beetles,.neon.mammals,.neon.plants), c("DP1.10022.001","DP1.10072.001","DP1.10098.001"))
-output <- vector("list", length(sites))
-for(i in seq_along(sites)){
-    site.data <- nneo_site(sites[i])$dataProducts
-    if(length(site.data)>0){
-        site.data <- site.data[site.data$dataProductCode %in% names(product.codes),]
-        output[[i]] <- vector("list", nrow(site.data))
-        for(j in seq_len(nrow(site.data)))
-            output[[i]][[j]] <- do.call(rbind, lapply(unlist(site.data$availableMonths[j]), product.codes[site.data$dataProductCode[j]][[1]], site=sites[i]))
-    }
-}
-
-"DP1.10098.001"
-"DP1.10098.001"
-
-# NEON Plants
-#' @importFrom nneo nneo_data
-.neon.2018a <- function(...){
-
-}
-}
-
 .chu.2013 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
     site.info <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "quad_info.csv"))
@@ -275,6 +196,7 @@ for(i in seq_along(sites)){
                         data.frame(species=colnames(new.data), taxonomy="Spheniscidae")))
 }
 
+#' @importFrom gdata read.xls
 .broadway.2015 <- function(...){
     #Fish abundance data for Wabash River for years 1974 - 2008.
     data <- read.xls(suppdata("10.1371/journal.pone.0124954", 1))
@@ -657,6 +579,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy=NA)))
 }
 
+#' @importForm reshape2
 .boyle.2015 <- function(...) {
     # This dataset is combining 23 years of observations at one site. They combine
     # the counts (which are not in the dataset) to get the mean abundance across 
@@ -708,28 +631,12 @@ clean.predicts <- function(data) {
 }
 
 .reed.2017a <- function(...) {
-    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/17/30/a7899f2e57ea29a240be2c00cce7a0d4"
-    addr <- sub("^https","http", addr)
-    data <-read.csv(addr, header=F, skip=1, sep=",",
-                    col.names=c("year","month","date","site","transect","quad",
-                                "side","sp_code","size","count","area","vis",
-                                "obs_code","survey_timing","notes","taxon_genus",
-                                "taxon_species","group","survey","taxon_kingdom",
-                                "taxon_phylum","taxon_class","taxon_order",
-                                "taxon_family","taxon_former_genus",
-                                "taxon_former_species","common_name",
-                                "substrate_type","mobility","growth_morph"), check.names=TRUE)
-    for (i in 1:nrow(data)){
-        if (data$count[i] < 0) {
-            data$count[i] <- 0
-        }
-        if (data$taxon_species[i] == -99999) {
-           data$taxon_species[i] <- NA
-        }
-        if (data$taxon_genus[i] == -99999) {
-           data$taxon_genus[i] <- NA
-        }
-    }
+    data <-read.csv("http://pasta.lternet.edu/package/data/eml/knb-lter-sbc/17/30/a7899f2e57ea29a240be2c00cce7a0d4", as.is=TRUE)
+    names(data) <- tolower(names(data))
+    data$count[data$count < 0] <- 0
+    data$taxon_species[data$taxon_species == -99999] <- NA
+    data$taxon_genus[data$taxon_genus == -99999] <- NA
+    
     data$species <- with(data, paste(taxon_genus, taxon_species, sep="_"))
     data$site <- with(data, paste(site, transect, sep="_"))
     data$site_year <- with(data, paste(site, year, sep="_"))
@@ -738,31 +645,17 @@ clean.predicts <- function(data) {
     temp <- strsplit(rownames(data), "_")
     year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
     name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
-    return(.df.melt(data,
+    return(.matrix.melt(data,
                     data.frame(units="#"),
                     data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
                     data.frame(species=colnames(data), taxonomy=NA)))
 }
 
 .reed.2017b <- function(...) {
-    addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/19/23/5daf0da45925ba9014872c6bc9f6c8bb"
-    addr <- sub("^https","http", addr)
-    data <-read.csv(addr,header=F, skip=1, sep=",",
-                    col.names=c("year","month","date","site","transect","side",
-                                "quad","sp_code","count","size","area","obs_code",
-                                "notes","taxon_genus","taxon_species","group","survey",
-                                "taxon_kingdom","taxon_phylum","taxon_class","taxon_order",
-                                "taxon_family","taxon_previous_genus","taxon_previous_species",
-                                "common_name","substrate_type","mobility","growth_morph"),
-                    check.names=TRUE)
-    for (i in 1:nrow(data)){
-        if (data$count[i] < 0) {
-            data$count[i] <- 0
-        }
-        if (data$taxon_species[i] == -99999) {
-           data$taxon_species[i] <- "spp."
-        }
-    }
+    data <-read.csv("https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/19/23/5daf0da45925ba9014872c6bc9f6c8bb")
+    names(data) <- tolower(names(data))
+    data$count[data$count < 0] <- 0
+    data$taxon_species[data$taxon_species == -99999] <- NA
     data$species <- with(data, paste(taxon_genus, taxon_species, sep="_"))
     data$site <- with(data, paste(site, transect, sep="_"))
     data$site_year <- with(data, paste(site, year, sep="_"))
@@ -771,7 +664,7 @@ clean.predicts <- function(data) {
     temp <- strsplit(rownames(data), "_")
     year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
     name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
-    return(.df.melt(data,
+    return(.matrix.melt(data,
                     data.frame(units="#"),
                     data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
                     data.frame(species=colnames(data), taxonomy=NA)))
@@ -849,11 +742,9 @@ clean.predicts <- function(data) {
     temp <- tempfile()
     download.file("https://www.forestplots.net/upload/data-packages/phillips-et-al-2015/PeruTransectData.zip", temp)
     data <- read.csv(unzip(temp, files="PeruTransectData/DataPeruTransects/IndividualData.csv"))
-    unlink(temp)
     temp <- tempfile()
     download.file("https://www.forestplots.net/upload/data-packages/phillips-et-al-2015/PeruTransectData.zip", temp)
     plotData <- read.csv(unzip(temp, files="PeruTransectData/DataPeruTransects/PlotInformationforRPackage.csv"))
-    unlink(temp)
     # The data is a census of all trees in a 0.1-ha plot that have a diameter at breast height > 10cm
     # I turned this into an abundance matrix given that they have records for each of the trees of a particular size.
     data$DBH1 <- 1
@@ -904,6 +795,34 @@ clean.predicts <- function(data) {
     return(mapply(rbind, countData, paData))
 }
 
+.thibault.2011 <- function(...){
+    abundance.data <- read.csv(suppdata("E092-201", "MCDB_communities.csv", from = "esa_data_archives"), as.is=TRUE)
+    site.data <- read.csv(suppdata("E092-201", "MCDB_sites.csv", from = "esa_data_archives"), as.is=TRUE)
+    species <- read.csv(suppdata("E092-201", "MCDB_species.csv", from="esa_data_archives"), as.is=TRUE)
+    abundance.data$species <- paste(species$Genus, species$Species)[match(abundance.data$Species_ID, species$Species_ID)]
+    abundance.data$species <- gsub("  ", " ", abundance.data$species)
+    abundance.data$Abundance <- as.numeric(abundance.data$Abundance)
+    abundance.data <- na.omit(abundance.data)
+    plot.year <- with(abundance.data, paste(Site_ID,Initial_year, sep="_"))
+    
+    site.metadata <- abundance.data[,c("Site_ID","Initial_year")]
+    site.metadata$plot.year <- with(site.metadata, paste(Site_ID,Initial_year, sep="_"))
+    site.metadata <- site.metadata[!duplicated(site.metadata$plot.year),]
+    site.metadata$lat <- site.data$Latitude[match(site.metadata$Site_ID,site.data$Site_ID)]
+    site.metadata$long <- site.data$Longitude[match(site.metadata$Site_ID,site.data$Site_ID)]
+    names(site.metadata) <- c("name","year","id","lat","long")
+    site.metadata <- site.metadata[,c("id","year","name","lat","long")]
+    site.metadata$address <- NA
+    site.metadata$area <- "sherman.trap"
+
+    return (.df.melt(abundance.data$species, 
+                     plot.year,
+                     abundance.data$Abundance, 
+                     data.frame(units="#"), 
+                     site.metadata, 
+                     data.frame(species=unique(abundance.data$species),taxonomy=NA)))
+}
+
 if(FALSE){
 .albouy.2015 <- function(...) {
     temp <- tempfile()
@@ -918,13 +837,6 @@ if(FALSE){
                  # packages for the time being this is sufficient
     data(laja)
     return(.matrix.melt(invert.sites))
-}
-
-.thibault.2011 <- function(...){
-    #This one is not done
-    abundance.data <- read.csv(suppdata("E092-201", "MCDB_communities.csv", from = "esa_archives"))
-    site.data <- read.csv(suppdata("E092-201", "MCDB_sites.csv", from = "esa_archives"))
-    return(transformed.data)    
 }
 
 .chamailleJammes.2016 <- function(...){
