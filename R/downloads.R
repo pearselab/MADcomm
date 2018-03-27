@@ -826,6 +826,82 @@ clean.predicts <- function(data) {
 }
 
 if(FALSE){
+.collins.2018a <- function(...) {
+    # The species in this dataset are not named; Generic identifiers are given (e.g. 'sp1')
+    data <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/f69c8fe563067164191d61b6e33eff03",  as.is=TRUE)
+    names(data) <- tolower(names(data))
+    metadata <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/8284876afe3a1cb0a919d37e1164357f", as.is=TRUE)
+    names(metadata) <- tolower(names(metadata))
+    data$latitude <- metadata$lat[match(data$site_project_comm, metadata$site_project_comm)]
+    data$longitude <- metadata$long[match(data$site_project_comm, metadata$site_project_comm)]
+    data$address <- metadata$location[match(data$site_project_comm, metadata$site_project_comm)]
+    return(.df.melt(data$species, data$site_project_comm, data$relcover,
+                    data.frame(units="%"),
+                    data.frame(id=unique(data$site_project_comm), 
+                               year=NA, 
+                               name=unique(data$site_project_comm), 
+                               lat=data$latitude[!duplicated(data$site_project_comm)], 
+                               long=data$longitude[!duplicated(data$site_project_comm)], 
+                               address=data$address[!duplicated(data$site_project_comm)], 
+                               area=NA),
+                    data.frame(species=unique(data$species), taxonomy="Plantae")))
+}
+
+.cobb.2016 <- function(...) {
+    # Some of the last columns in the data do not correspond to species but to families.
+    # Some of the values for the data are fractions?
+    # Need to match the column names with the species codes; Family level data there though
+    data <- read.csv("2011_2015_final_pitfall_9.3.16.csv")
+    return(.matrix.melt(data,
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), 
+                                   year=NA, 
+                                   name=NA, 
+                                   lat=NA, 
+                                   long=NA, 
+                                   address=NA, 
+                                   area=NA),
+                        data.frame(species=colnames(data), taxonomy="Insecta")))
+}
+
+.franklin.2018 <- function(...) {
+    # Need metadata for this one; Scott is working on it
+    data <- read.xls("Copy of WEST CO SPP COVER.xlsx")
+    return(.df.melt(data$SCIENTIFIC.NAME,
+                    data$SITE_ID,
+                    data$ABS.COV,
+                    data.frame(units="area"),
+                    data.frame(id=unique(data$SITE_ID), 
+                               year=NA, 
+                               name=unique(data$SITE_ID), 
+                               lat=NA, 
+                               long=NA, 
+                               address=NA, 
+                               area=NA),
+                    data.frame(species=unique(data$SCIENTIFIC.NAME), taxonomy="Plantae")))
+}
+
+.dyer.2017 <- function(...) {
+    # Location is not always GPS coordinates in this dataset. Some are descriptions or titles of the locations.
+    # Some of the values in data are blank.
+    data <- read.xls("SWRS_plots_updated_nov_3_2017.xlsx")
+    data<-data[,1:24]
+    data$year <- format(as.Date(data$Date..D.M.Y., format="%Y-%m-%d"),"%Y")
+    data$plot.year <- with(data, paste(X.number, year, sep="."))
+    return(.df.melt(data$plant.sp,
+                    data$plot.year,
+                    data$Leaf.area..cm.2., 
+                    data.frame(units="area"), 
+                    data.frame(id=unique(data$plot.year),
+                               year=data$year[!duplicated(data$plot.year)], 
+                               name=data$X.number[!duplicated(data$plot.year)], 
+                               lat=NA, 
+                               long=NA, 
+                               address=NA, 
+                               area="cm2"),
+                    data.frame(species=unique(data$plant.sp), taxonomy="Plantae")))
+}
+
 .albouy.2015 <- function(...) {
     temp <- tempfile()
     download.file("http://esapubs.org/archive/ecol/E096/203/Presence_absence_data.zip", temp)
