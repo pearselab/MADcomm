@@ -9,4 +9,13 @@ Description: Downloads community presence/absence and abundance data
     from published sources, and collates them into an easy-to-use
     format for use within R
 License: GPL-3
+Depends:
+    R (>= 2.10)
+Imports:
+    suppdata,
+    nneo,
+    testdat (>= 0.2-0),
+    gdata (>= 2.17.0),
+    reshape2 (>= 1.4.2),
+    httr (>= 1.2.1)
 RoxygenNote: 6.0.1

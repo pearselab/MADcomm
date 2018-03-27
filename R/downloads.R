@@ -3,6 +3,8 @@
 #####################
 
 #' @importFrom suppdata suppdata
+#' @importFrom utils data head read.csv
+#' @importFrom stats aggregate na.omit
 .adler.2007 <- function(...){
     data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
     comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
@@ -579,7 +581,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy=NA)))
 }
 
-#' @importForm reshape2
+#' @importFrom reshape2 melt
 .boyle.2015 <- function(...) {
     # This dataset is combining 23 years of observations at one site. They combine
     # the counts (which are not in the dataset) to get the mean abundance across 

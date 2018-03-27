@@ -7,17 +7,14 @@
 nacdb(cache, datasets, delay = 5)
 }
 \arguments{
+\item{cache}{Folder where cached downloads are stored}
+
 \item{datasets}{Character vector of datasets to be searched for
 trait data. If not specified (the default) all trait datasets
 will be downloaded and returned.}
 
-\item{species}{Character vector of species to be searched for trait
-data. If not specified (the default) data for all species will
-be downloaded and returned.}
-
-\item{traits}{Character vector of traits to be searched for
-data. If not specified (the default) data for all traits will
-be downloaded and returned.}
+\item{delay}{How long to wait between downloads (to save server
+overload); default is 5 seconds.}
 }
 \value{
 nacdb.data object. XXX
@@ -38,7 +35,7 @@ whether the datasets NATDB searches have been updated since the
 package was last built.
 }
 \author{
-Will Pearse; Clint; Raimi; Ethan; etc.
+Will Pearse; Bodie; etc.
 #@examples
 # Limit the scope of these as they have to work online on servers!...
 #@seealso

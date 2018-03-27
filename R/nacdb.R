@@ -17,14 +17,11 @@
 #' @param datasets Character vector of datasets to be searched for
 #'     trait data. If not specified (the default) all trait datasets
 #'     will be downloaded and returned.
-#' @param species Character vector of species to be searched for trait
-#'     data. If not specified (the default) data for all species will
-#'     be downloaded and returned.
-#' @param traits Character vector of traits to be searched for
-#'     data. If not specified (the default) data for all traits will
-#'     be downloaded and returned.
+#' @param cache Folder where cached downloads are stored
+#' @param delay How long to wait between downloads (to save server
+#'     overload); default is 5 seconds.
 #' @return nacdb.data object. XXX
-#' @author Will Pearse; Clint; Raimi; Ethan; etc.
+#' @author Will Pearse; Bodie; etc.
 #' #@examples
 #' # Limit the scope of these as they have to work online on servers!...
 #' #@seealso 
@@ -167,8 +164,9 @@ citations <- function(x){
     return(as.character(nacdb.citations$BibTeX.citation[match(datasets, nacdb.citations$Name)]))
 }
 
+#' @method subset nacdb
 #' @export
-subset.study <- function(x, studies){
+subset.study <- function(x, studies, ...){
     if(!inherits(x, "nacdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
 
