@@ -166,7 +166,7 @@
     longitude <- site.info$longitude[match(plots, site.info$quadrat)]
     comm[is.na(comm)] <- 0
     return(.matrix.melt(comm, 
-                        data.frame(units="area"), 
+                        data.frame(units="area", treatment="grazing"), 
                         data.frame(id=rownames(comm), year=years, name=plots, lat=latitude, long=longitude, address="Central Plains Experimental Range in Nunn, Colorado, USA", area="1m2"),
                         data.frame(species=colnames(comm), taxonomy=NA)))
 }
@@ -323,6 +323,8 @@ clean.predicts <- function(data) {
     temp <- strsplit(levels(drop.levels(site.id)), "_")
     year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
     name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
+
+    # This function has metadata that could be added for burn 
     return(.df.melt(data$species, 
                     data$plot_year, 
                     data$cover, 
@@ -825,32 +827,101 @@ clean.predicts <- function(data) {
                      data.frame(species=unique(abundance.data$species),taxonomy=NA)))
 }
 
-if(FALSE){
-.collins.2018a <- function(...) {
+.branstetter.2018 <- function(...) {
+    data <- read.csv("TableA3.csv")
+    metadata <- read.csv("TableA2.csv")
+    rownames(data) <- data[,1]
+    data[,1] <- NULL
+    colnames(data) <- gsub(".", "-", colnames(data), fixed=TRUE)
+    data <- t(data)
+    rownames(data) <- paste(rownames(data), year, sep="_")
+    metadata$year <- format(as.Date(metadata$datecollected, format="%d-%b-%Y"),"%Y")
+    year <- metadata$year[!duplicated(metadata$site)]
+    name <- unique(metadata$site)
+    lat <- metadata$latitude[!duplicated(metadata$site)]
+    long <- metadata$longitude[!duplicated(metadata$site)]
+    return(.matrix.melt(data, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), year, name, lat, long, 
+                                    address=NA, area=NA),
+                        data.frame(species=colnames(data), taxonomy="Hymenoptera")))
+}
+
+.collins.2018 <- function(...) {
     # The species in this dataset are not named; Generic identifiers are given (e.g. 'sp1')
+        # Species codes were added due to people not wanting scott to publish their data.
     data <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/f69c8fe563067164191d61b6e33eff03",  as.is=TRUE)
     names(data) <- tolower(names(data))
     metadata <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/8284876afe3a1cb0a919d37e1164357f", as.is=TRUE)
     names(metadata) <- tolower(names(metadata))
+    data$site_year <- with(data, paste(data$sitesubplot, experiment_year, sep="_"))
     data$latitude <- metadata$lat[match(data$site_project_comm, metadata$site_project_comm)]
     data$longitude <- metadata$long[match(data$site_project_comm, metadata$site_project_comm)]
     data$address <- metadata$location[match(data$site_project_comm, metadata$site_project_comm)]
-    return(.df.melt(data$species, data$site_project_comm, data$relcover,
+    data$area <- metadata$plot_size[match(data$site_project_comm, metadata$site_project_comm)]
+    return(.df.melt(data$species, 
+                    data$site_year, 
+                    data$relcover,
                     data.frame(units="%"),
-                    data.frame(id=unique(data$site_project_comm), 
-                               year=NA, 
-                               name=unique(data$site_project_comm), 
-                               lat=data$latitude[!duplicated(data$site_project_comm)], 
-                               long=data$longitude[!duplicated(data$site_project_comm)], 
-                               address=data$address[!duplicated(data$site_project_comm)], 
-                               area=NA),
+                    data.frame(id=unique(data$site_year), 
+                               year=data$experiment_year[!duplicated(data$site_year)], 
+                               name=data$sitesubplot[!duplicated(data$site_year)], 
+                               lat=data$latitude[!duplicated(data$site_year)], 
+                               long=data$longitude[!duplicated(data$site_year)], 
+                               address=data$address[!duplicated(data$site_year)], 
+                               area=data$area[!duplicated(data$site_year)]),
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
+}
+
+if(FALSE){
+.lightfoot.2016 <- function(...) {
+    data <- read.table("http://sev.lternet.edu/sites/default/files/data/sev-106/sev106_hopperdynamics_20150826.txt", header=T, sep=",")
+    data$year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
+    spec_codes <- c("ACPI","AGDE","AMCO","ARCO","ARPS","AUEL","AUFE","BOAR",
+                 "BRMA","CIPA","COCR","COOC","COTE","DABI","ERSI","HATR",
+                 "HERU","HEVI","HICA","LAAZ","LEWH","MEAR","MEAZ","MEBO",
+                 "MEGL","MELA","MEOC","METE","OPOB","PAPA","PHQU","PHRO",
+                 "PSDE","PSTE","SCNI","SYMO","TRCA","TRFO","TRKI","TRPA",
+                 "TRPI","XACO","XAMO")
+    species <- c("Acantherus piperatus","Ageneotettix deorum",
+                "Amphitornus coloradus","Arphia conspersa",
+                "Arphia pseudonietana","Aulocara elliotti",
+                "Aulocara femoratum","Bootettix argentatus",
+                "Brachystola magna","Cibolacris parviceps",
+                "Cordillacris crenulata","Cordillacris occipitalis",
+                "Conozoa texana","Dactylotum bicolor",
+                "Eritettix simplex","Hadtrotettix trifasciatus",
+                "Heliaula rufa","Hesperotettix viridis",
+                "Hippopedon capito","Lactista azteca","Leprus wheeleri",
+                "Melanoplus aridus","Melanoplus arizonae",
+                "Melanoplus bowditchi","Melanoplus gladstoni",
+                "Melanoplus lakinus","Melanoplus occidentalis",
+                "Mermeria texana","Opeia obscura","Paropomala pallida",
+                "Phlibostroma quadrimaculatum","Phrynotettix robustus",
+                "Psoloessa delicatula","Psoloessa texana",
+                "Schistocerca nitens","Syrbula montezuma",
+                "Trimerotropis californicus","Tropidolophus formosus",
+                "Trachyrhachis kiowa","Trimerotropis pallidipennis",
+                "Trimerotropis pistrinaria","Xanthippus corallipes",
+                "Xanthippus montanus")
+    metadata <- data.frame(spec_codes, species)
+    data$SPECIES <- metadata$species[match(data$SPECIES, metadata$spec_codes)]
+    data <- with(data, tapply(CNT, list(site_year, SPECIES), sum, na.rm=TRUE))
+    data$site_year <- with(data, paste(SITE, year, sep="_"))
+    temp <- strsplit(rownames(data), "_")
+    year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
+    year <- format(as.Date(data$DATE, format="%m/%Y"),"%Y")
+    name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
+    return(.df.melt(data$species, data$SITE, data$CNT,
+                    data.frame(units="#"),
+                    data.frame(id=unique(data$plot_year), year, name, lat, long, address, area),
+                    data.frame(species=unique(data$species), taxonomy="Orthoptera")))
 }
 
 .cobb.2016 <- function(...) {
     # Some of the last columns in the data do not correspond to species but to families.
-    # Some of the values for the data are fractions?
-    # Need to match the column names with the species codes; Family level data there though
+    # Need to match the column names with the species codes; Order level data there though; OTUs in some columns
+    # time that the trap was set out.
     data <- read.csv("2011_2015_final_pitfall_9.3.16.csv")
     return(.matrix.melt(data,
                         data.frame(units="#"),
@@ -861,18 +932,24 @@ if(FALSE){
                                    long=NA, 
                                    address=NA, 
                                    area=NA),
-                        data.frame(species=colnames(data), taxonomy="Insecta")))
+                        data.frame(species=colnames(data), taxonomy="Arthropoda")))
 }
 
 .franklin.2018 <- function(...) {
-    # Need metadata for this one; Scott is working on it
-    data <- read.xls("Copy of WEST CO SPP COVER.xlsx")
+    data <- read.xls("Copy of WEST CO SPP COVER.xlsx", as.is=TRUE)
+    data$year <- NA
+    for(i in seq_len(nrow(data))){
+        t <- as.numeric(regexpr("[0-9]{4}", data$SITE_ID[i]))[1]
+        data$year[i] <- substr(data$SITE_ID[i], t, t+4)
+    }
+    metadata <- read.xls("WEST CO SAGEBRUSH PLOTS.xlsx", as.is=TRUE)
+    data$SITE_ID <- gsub(" ", "", data$SITE_ID)
     return(.df.melt(data$SCIENTIFIC.NAME,
                     data$SITE_ID,
                     data$ABS.COV,
                     data.frame(units="area"),
                     data.frame(id=unique(data$SITE_ID), 
-                               year=NA, 
+                               year=data$year, 
                                name=unique(data$SITE_ID), 
                                lat=NA, 
                                long=NA, 
@@ -881,9 +958,18 @@ if(FALSE){
                     data.frame(species=unique(data$SCIENTIFIC.NAME), taxonomy="Plantae")))
 }
 
+.mooney.2018 <- function(...) {
+    #will need to loop through and do this for each year (sheet) in the dataset.
+    data <- read.xls("Insect Abundance Population Summaries.xlsx", sheet="#")
+    data <- data[which(data$Response == "Total"),]
+    #remove all rows that contain only NA values
+    data<-data[ ,!apply(data, 2, function(x) all(is.na(x)))]
+    data<-melt(data, id=c("Population", "Response"))
+}
+
 .dyer.2017 <- function(...) {
     # Location is not always GPS coordinates in this dataset. Some are descriptions or titles of the locations.
-    # Some of the values in data are blank.
+    # Some of the values in data are blank. These do not mean that the value is zero but that the data is not complete. (Lee has the code to complete it).
     data <- read.xls("SWRS_plots_updated_nov_3_2017.xlsx")
     data<-data[,1:24]
     data$year <- format(as.Date(data$Date..D.M.Y., format="%Y-%m-%d"),"%Y")
