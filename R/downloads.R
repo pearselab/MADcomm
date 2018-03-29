@@ -866,13 +866,20 @@ if(FALSE){
 
 .franklin.2018 <- function(...) {
     # Need metadata for this one; Scott is working on it
-    data <- read.xls("Copy of WEST CO SPP COVER.xlsx")
+    data <- read.xls("Copy of WEST CO SPP COVER.xlsx", as.is=TRUE)
+    data$year <- NA
+    for(i in seq_len(nrow(data))){
+        t <- as.numeric(regexpr("[0-9]{4}", data$SITE_ID[i]))[1]
+        data$year[i] <- substr(data$SITE_ID[i], t, t+4)
+    }
+    metadata <- read.xls("WEST CO SAGEBRUSH PLOTS.xlsx", as.is=TRUE)
+    data$SITE_ID <- gsub(" ", "", data$SITE_ID)
     return(.df.melt(data$SCIENTIFIC.NAME,
                     data$SITE_ID,
                     data$ABS.COV,
                     data.frame(units="area"),
                     data.frame(id=unique(data$SITE_ID), 
-                               year=NA, 
+                               year=data$year, 
                                name=unique(data$SITE_ID), 
                                lat=NA, 
                                long=NA, 
@@ -1010,4 +1017,11 @@ if(FALSE){
                      data.frame(species=species,taxonomy=NA))
 
     }
+}
+
+if(FALSE)
+.kuhlman.2017 <- function(...){
+    #Missoula County, Montana, USA
+    #count them up, all fine
+    #point out it's a species list, essentially
 }
