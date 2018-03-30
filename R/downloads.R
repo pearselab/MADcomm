@@ -152,7 +152,7 @@
     return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 
-.chu.2013 <- function(...){
+.chu.2016 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
     site.info <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "quad_info.csv"))
     colnames(data) <- tolower(colnames(data))
@@ -873,10 +873,51 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
 }
 
+.franklin.2018 <- function(...) {
+    data <- read.xls("CopyofWESTCOSPPCOVER.xlsx", as.is=TRUE)
+    ground_data <- read.xls("WEST CO GROUND COVER.xlsx")
+    data$R4_SPP <- NULL
+    colnames(data) <- colnames(ground_data)
+    combined.data <- rbind(data, ground_data)
+    combined.data$year <- NA
+    for(i in seq_len(nrow(combined.data))){
+        t <- as.numeric(regexpr("[0-9]{4}", combined.data$SITE_ID[i]))[1]
+        combined.data$year[i] <- substr(combined.data$SITE_ID[i], t, t+4)
+    }
+    metadata <- read.xls("WEST CO SAGEBRUSH PLOTS.xlsx", as.is=TRUE)
+    combined.data$SITE_ID <- gsub(" ", "", combined.data$SITE_ID)
+    combined.data$lat <- metadata$LATITUDE[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$long <- metadata$LONGITUDE[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$elevation.ft <- metadata$Elev..ft.[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$aspect <- metadata$Aspect[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$pct.slope <- metadata$Pct_Slope[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$project <- metadata$PROJECT[match(combined.data$SITE_ID, metadata$SITE_ID)]
+    combined.data$COVER_PERCENT <- as.numeric(combined.data$COVER_PERCENT)
+    combined.data$COVER_PERCENT[is.na(combined.data$COVER_PERCENT)] <- 0
+    return(.df.melt(combined.data$NAME,
+                    combined.data$SITE_ID,
+                    combined.data$COVER_PERCENT,
+                    data.frame(units="area"),
+                    data.frame(id=unique(combined.data$SITE_ID), 
+                               year=combined.data$year[!duplicated(combined.data$SITE_ID)], 
+                               name=unique(combined.data$SITE_ID), 
+                               lat=combined.data$lat[!duplicated(combined.data$SITE_ID)], 
+                               long=combined.data$long[!duplicated(combined.data$SITE_ID)], 
+                               address=NA, 
+                               area="0.1ha",
+                               elevation.ft=combined.data$elevation.ft[!duplicated(combined.data$SITE_ID)],
+                               aspect=combined.data$aspect[!duplicated(combined.data$SITE_ID)], 
+                               pct.slope=combined.data$pct.slope[!duplicated(combined.data$SITE_ID)],
+                               project=combined.data$project[!duplicated(combined.data$SITE_ID)]),
+                    data.frame(species=unique(combined.data$NAME), 
+                               taxonomy=NA, 
+                               other="Plant study; Percent cover of species and ground")))
+}
+
 if(FALSE){
 .lightfoot.2016 <- function(...) {
     data <- read.table("http://sev.lternet.edu/sites/default/files/data/sev-106/sev106_hopperdynamics_20150826.txt", header=T, sep=",")
-    data$year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
+    data$month.year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
     spec_codes <- c("ACPI","AGDE","AMCO","ARCO","ARPS","AUEL","AUFE","BOAR",
                  "BRMA","CIPA","COCR","COOC","COTE","DABI","ERSI","HATR",
                  "HERU","HEVI","HICA","LAAZ","LEWH","MEAR","MEAZ","MEBO",
@@ -912,51 +953,55 @@ if(FALSE){
     year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
     year <- format(as.Date(data$DATE, format="%m/%Y"),"%Y")
     name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
+    burned <- 
     return(.df.melt(data$species, data$SITE, data$CNT,
                     data.frame(units="#"),
-                    data.frame(id=unique(data$plot_year), year, name, lat, long, address, area),
+                    data.frame(id=unique(data$plot_year), 
+                               year, 
+                               name, 
+                               lat=NA, 
+                               long=NA, 
+                               address="Sevilleta National Wildlife Refuge, New Mexico", 
+                               area=NA,
+                               burned),
                     data.frame(species=unique(data$species), taxonomy="Orthoptera")))
 }
 
 .cobb.2016 <- function(...) {
-    # Some of the last columns in the data do not correspond to species but to families.
-    # Need to match the column names with the species codes; Order level data there though; OTUs in some columns
-    # time that the trap was set out.
-    data <- read.csv("2011_2015_final_pitfall_9.3.16.csv")
+    data <- read.xls("COMPLETE Dataset as of 4_recovery2.xlsx")
+    data$name <- with(data, paste("study.area", Study.Area, "site", Site, sep="_"))
+    data$month.year <- with(data, paste(Month, Year, sep="-"))
+    data$site.year <- with(data, paste(name, month.year, sep="_"))
+    metadata <- data[,c(1:11, 148, 149, 150)]
+    metadata$Longitude <- gsub("\342\200\223", "-", metadata$Longitude)
+    data[,1] <- data$site.year
+    data[,c(2:11, 148, 149, 150)] <- NULL
+    data <- aggregate(.~Sample.., data=data, FUN=sum)
+    rownames(data) <- data[,1]
+    data[,1] <- NULL
+    rownames <- rownames(data)
+    data <- apply(data, 2, as.numeric)
+    rownames(data) <- rownames
+    name <- metadata$name[match(rownames(data), metadata$site.year)]
+    year <- metadata$Year[match(rownames(data), metadata$site.year)]
+    lat <- metadata$Latitude[match(rownames(data), metadata$site.year)]
+    long <- metadata$Longitude[match(rownames(data), metadata$site.year)]
+    veg.type <- metadata$Veg.type[match(rownames(data), metadata$site.year)]
+    burned <- metadata$Burn[match(rownames(data), metadata$site.year)]
+    monsoon <- metadata$Monsoon[match(rownames(data), metadata$site.year)]
     return(.matrix.melt(data,
-                        data.frame(units="#"),
+                        data.frame(units="STD.#"),
                         data.frame(id=rownames(data), 
-                                   year=NA, 
-                                   name=NA, 
-                                   lat=NA, 
-                                   long=NA, 
+                                   year, 
+                                   name, 
+                                   lat, 
+                                   long, 
                                    address=NA, 
-                                   area=NA),
+                                   area=NA,
+                                   veg.type,
+                                   burned,
+                                   monsoon),
                         data.frame(species=colnames(data), taxonomy="Arthropoda")))
-}
-
-.franklin.2018 <- function(...) {
-    # Need metadata for this one; Scott is working on it
-    data <- read.xls("Copy of WEST CO SPP COVER.xlsx", as.is=TRUE)
-    data$year <- NA
-    for(i in seq_len(nrow(data))){
-        t <- as.numeric(regexpr("[0-9]{4}", data$SITE_ID[i]))[1]
-        data$year[i] <- substr(data$SITE_ID[i], t, t+4)
-    }
-    metadata <- read.xls("WEST CO SAGEBRUSH PLOTS.xlsx", as.is=TRUE)
-    data$SITE_ID <- gsub(" ", "", data$SITE_ID)
-    return(.df.melt(data$SCIENTIFIC.NAME,
-                    data$SITE_ID,
-                    data$ABS.COV,
-                    data.frame(units="area"),
-                    data.frame(id=unique(data$SITE_ID), 
-                               year=data$year, 
-                               name=unique(data$SITE_ID), 
-                               lat=NA, 
-                               long=NA, 
-                               address=NA, 
-                               area=NA),
-                    data.frame(species=unique(data$SCIENTIFIC.NAME), taxonomy="Plantae")))
 }
 
 .mooney.2018 <- function(...) {
@@ -964,8 +1009,8 @@ if(FALSE){
     data <- read.xls("Insect Abundance Population Summaries.xlsx", sheet="#")
     data <- data[which(data$Response == "Total"),]
     #remove all rows that contain only NA values
-    data<-data[ ,!apply(data, 2, function(x) all(is.na(x)))]
-    data<-melt(data, id=c("Population", "Response"))
+    data <- data[ ,!apply(data, 2, function(x) all(is.na(x)))]
+    data <- melt(data, id=c("Population", "Response"))
 }
 
 .dyer.2017 <- function(...) {
@@ -1079,10 +1124,6 @@ if(FALSE){
     t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
     data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
 }
-
-
-
-
 }
 
 if(FALSE){
