@@ -1146,3 +1146,40 @@ if(FALSE)
     #count them up, all fine
     #point out it's a species list, essentially
 }
+
+
+.truxa.2015 <- function(...){
+  data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
+  comm <- data[,-1:-3] #get rid of columns you don't want
+  rownames(comm) <- data$Species #name the rows what you want
+  comm <- t(comm) #t=transpose, flip the rows and columns
+  return(.matrix.melt(comm, 
+                      data.frame(units="#"),
+                      data.frame(id=rownames(comm),year="2006-2008",
+                                 name=c("Danube non-flooded", "Danude flooded", "Leitha non-flooded", "Leitha flooded", "Morava non-flooded", "Morava flooded"),
+                                 lat=c("16°41'24", "16°42'20", "16°51'32", "16°53'26", "16°53'22"),
+                                 long=c("48°08'41", "48°07'53", "48°00'19", "48°03'28", "48°17'00", "48°17'96"),
+                                 address="Eastern Austria",area="na"), 
+                      data.frame(species=colnames(comm),taxonomy="Lepidoptera")))
+}
+
+
+
+.oswald.2015 <- function(...){
+  data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.56p0f", "Oswald_et_al_2015_dryad.56p0f.xlsx"))) 
+  comm <- data[,-13]
+  comm <- comm[,-2:-10]
+  names(comm) <- c("Locality", "Species", "Numbers")
+  comm$Numbers <- as.numeric(comm$Numbers)
+  comm <- with(comm, tapply(Numbers, list(Locality, Species), sum))
+  comm[is.na(comm)] <- 0
+  return(.matrix.melt(comm, 
+                      data.frame(units="#"),
+                      data.frame(id=rownames(comm),year="2009-2011",
+                                 name=data$Locality,
+                                 lat=with(data, tapply(Latitude.Decimal.Degrees, Locality, mean)),
+                                 long=with(data, tapply(Longitude.Decimal.Degrees, Locality, mean)),
+                                 address="Northwestern Peru, Tumbes, Marañón Valley",area="na"), 
+                      data.frame(species=colnames(comm),taxonomy="Aves")))
+}
+
