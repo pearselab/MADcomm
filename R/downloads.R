@@ -1159,6 +1159,7 @@ if(FALSE)
 	tmp <- tempfile()
 	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
 	tree_data <- read.xls(tmp, 1) 
+	tree_data <- tree_data[!is.na(tree_data$diameter.at.breast.height..cm.),]
 	plot_ids <- tree_data$Plot.number
 	# lat/long data
 	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
@@ -1169,10 +1170,10 @@ if(FALSE)
 	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
 	return(.df.melt(tree_data$species_name,
 			plot_ids,
-			tree_data$diameter.at.breat.height..cm.,
+			tree_data$diameter.at.breast.height..cm.,
 			data.frame(units = "dbh"),
 			ll_data,
-        		data.frame(species= tree_data$species_name, taxonomy="Plantae")
+        		data.frame(species= unique(tree_data$species_name), taxonomy="Plantae")
 ))
 }
 
@@ -1181,20 +1182,23 @@ if(FALSE)
 	tmp <- tempfile()
 	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
 	shrub_data <- read.xls(tmp, 2)
-	plot_ids <- shrub_data$Plot_number
+	shrub_data <- shrub_data[!is.na(shrub_data$coverage),]
+	plot_ids <- shrub_data$Plot.number
+	plot_ids <- gsub("-S[0-9]+", "", plot_ids)
 	# lat/long data
 	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
 	ll_data <- read.csv(tmp, sep = ";")
 	names(ll_data) <- c("forest_type", "id", "lat", "long")
 	ll_data$year <- 2017; ll_data$name <- ll_data$id
 	ll_data$forest_type <- NULL
-	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
+	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "5m*5m"
+	ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
 	return(.df.melt(shrub_data$species_name,
 			plot_ids,
 			shrub_data$coverage,
 			data.frame(units = "%"),
 			ll_data,
-			data.frame(species = shrub_data$species_name, taxonomy = "Plantae")
+			data.frame(species = unique(shrub_data$species_name), taxonomy = "Plantae")
 	      )
 	)
 }
@@ -1204,20 +1208,26 @@ if(FALSE)
 	tmp <- tempfile()
 	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
 	herb_data <- read.xls(tmp, 3)
-	plot_ids <- herb_data$Plot_number
+	herb_data <- herb_data[!is.na(herb_data$coverage),]
+	plot_ids <- herb_data$Plot.number
+	plot_ids <- gsub("-H[0-9]+", "", plot_ids)
 	# lat/long data
 	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
 	ll_data <- read.csv(tmp, sep = ";")
 	names(ll_data) <- c("forest_type", "id", "lat", "long")
 	ll_data$year <- 2017; ll_data$name <- ll_data$id
 	ll_data$forest_type <- NULL
-	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
-	return(.matrix.melt(shrub_data$species_name,
-			    plot_ids,
-			    shrub_data$coverage,
-			    data.frame(units = "%"),
-			    ll_data,
-			    data.frame(species = herb_data$species_name, taxonomy = "plantae")
+	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "1m*1m"
+	ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
+	ll_data <- ll_data[ll_data$id!="14",]
+	return(.df.melt(herb_data$species_name,
+			plot_ids,
+			herb_data$coverage,
+			data.frame(units = "%"),
+			ll_data,
+		        data.frame(species = unique(herb_data$species_name), taxonomy = "Plantae")
       		)
 	)
 }
+
+
