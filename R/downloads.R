@@ -1283,6 +1283,7 @@ if(FALSE)
 
 # in progress
 # Error in data.frame(id = rownames(data), year = years, name = names, lat = NA, : arguments imply differing number of rows: 20, 24, 1 
+if(FALSE)
 .sepulveda.2016 <- function(...){
 	tmp <- tempfile()
 	download.file("http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0157910.s001", tmp)
@@ -1301,6 +1302,7 @@ if(FALSE)
 }
 
 # metadata needs fixing
+if(FALSE)
 .bried.2017  <- function(...){
 	tmp <- tempfile()
 	download.file("https://datadryad.org/bitstream/handle/10255/dryad.151171/Dryad.data.xlsx?sequence=1", tmp)
