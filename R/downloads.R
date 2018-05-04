@@ -1252,3 +1252,93 @@ if(FALSE)
     site.metadata,
     species.metadata=data.frame(species=unique(species), taxonomy=NA)))
 }
+
+.ross.2014 <- function(...){
+  data <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.3136.5&entityid=88e40dc185bd3f00e7464398b61f40fc", header = TRUE)
+
+  species <- data$SCI_NAME
+  data$id <- rep(paste(data$BIOGEOGRAPHY,data$DATE))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id, year=DATE, name=BIOGEOGRAPHY, lat=NA,long=NA, address=NA,area=NA)
+  )
+  site <- rep(paste(data$BIOGEOGRAPHY,data$DATE), 856)
+  abundance <- as.vector(data$INDIVIDUALS)
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site, abundance,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+  ))
+}
+
+.miller.2013 <- function(...){
+  data<- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.2739.7&entityid=1743caa458ea7bb640833d884576f51c", header = TRUE)
+
+  species <- data$ENTITY
+  data$id <- rep(paste(data$TRAPID,data$YEAR))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id, year=YEAR, name=TRAPID, lat=NA,long=NA, address="Willamette National Forest Oregon USA",area=NA)
+  )
+  site <- rep(paste(data$TRAPID,data$YEAR), 17663)
+  abundance <- as.vector(data$NO_INDIV)
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site, abundance,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+  ))
+}
+
+.ellison.2017 <- function(...){
+  data <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-hfr.97.23&entityid=a840ed1f4c891cd7e6abe660aecb797a", header=TRUE)
+
+  species <- data$species
+  data$id <- rep(paste(data$plot,data$date))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id, year=date, name=plot, lat=NA,long=NA, address="North of West Point, New York, USA",area=NA)
+  )
+  site <- rep(paste(data$plot,data$date), 3120)
+  abundance <- as.vector(data$no.ants)
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site, abundance,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+  ))
+}
+
+## Error in data.frame(id = id, year = YEAR, name = Waterbody_Name, lat = lat,  : arguments imply differing number of rows: 7556, 20027, 1
+## does not yet work
+.rypel.2018 <- function(...){
+  abun <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=829ef0e4eea5e6392b19e595aa775832",header=TRUE)
+  taxon_inf <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=490295acdaf716c90b58a5a089ab9847",header=TRUE)
+  location <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=3c23c7e39d30f047fe6b229d85df2a88",header=TRUE)
+
+  abun <- merge(abun, taxon_inf, by = "taxon_id")
+  data <- merge(abun, location, by = "WBIC")
+
+  species <- data$taxon_name
+  lat <- data$Latitude
+  long <- data$Longitude
+  data$id <- rep(paste(data$Waterbody_Name,data$YEAR))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id, year=YEAR, name=Waterbody_Name, lat=lat,long=long, address="Wisconsin USA",area=NA)
+  )
+  site <- rep(paste(data$Waterbody_Name,data$Year), 7556)
+  data$site.id <- paste(data$Waterbody_Name,data$Year)
+  comm <- with(data, tapply(N, list(site.id, taxon_name), sum))
+  comm[is.na(comm)] <- 0
+
+  return(.df.melt(species, site, comm,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=taxon_id)
+  ))
+}
