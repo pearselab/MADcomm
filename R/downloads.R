@@ -1150,6 +1150,40 @@ if(FALSE)
     #point out it's a species list, essentially
 }
 
+.sandau.2017 <- function(...){
+  tmp.file <- tempfile()
+  download.file("https://www.datadryad.org/bitstream/handle/10255/dryad.129944/BB_all_4_SimilMatrices_Dryad.xlsx?sequence=1", tmp.file)
+  data <- read.xls(tmp.file, sheet=2)
+  lookup <- read.xls(suppdata("10.5061/dryad.44bm6", "BB_all_4_SimilMatrices_Dryad.xlsx"), sheet=1, skip=5, header=FALSE, as.is=TRUE)[-1:-8,]
+  lookup[,2] <- sanitize_text(lookup[,2])  
+  lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
+  lookup <- setNames(lookup[,2], lookup[,1])
+  names(data)[names(data) %in% names(lookup)] <- lookup[names(data)[names(data) %in% names(lookup)]]
+  site_year <- with(data, paste(data$PlotID, Year, sep="_"))
+  data <- cbind(site_year, data)
+  comm.mat <-data[-1:-11]
+  #This sets the row names to the unique plot_year identifier
+  rownames(comm.mat) <-data[,1]
+  site.metadata <- data[!duplicated(data$site_year),]
+  return(.matrix.melt(comm.mat,
+                      data.frame(units="%", treatment=""),
+                      data.frame(id=site.metadata$site_year, name=site.metadata$PlotID, year=site.metadata$Year, lat=NA, long=NA, address="Grandcour", treatment=site.metadata$Treat, area="20 × 20 m"),
+                      data.frame(species=unique(lookup, taxonomy="Plantae"))))
+}
+                       
+.kormann.2018 <- function(...){
+  data <- read.table(.unzip("Data/PointCounts.txt",suppdata("10.5061/dryad.0t9d3/1", "Data.zip")), header=TRUE)
+  site_pc <- with(data, paste(data$Site, PC, sep="_"))
+  rownames(data) <- site_pc
+  comm.mat <- as.matrix(data[-1:-13])
+  site.metadata <- data[,1:13]
+  species.meta <- data.frame(species=colnames(comm.mat), taxonomy="Aves")
+  return(.matrix.melt(comm.mat,
+                      data.frame(units="#"),
+                      data.frame(id=site_pc, name=site.metadata$Site, year=2011, lat=site.metadata$X, long=site.metadata$Y, address="Southern Costa Rica, around the Las Cruces Biological Station ", area=site.metadata$Area),
+                      species.meta))
+}
+
 .truxa.2015 <- function(...){
   data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
   comm <- data[,-1:-3] #get rid of columns you don't want
@@ -1240,7 +1274,6 @@ if(FALSE)
                       data.frame(species=colnames(comm),taxonomy="Aves")))
 }
 
-=======
 ##########
 # Sylvia's
 ##########
