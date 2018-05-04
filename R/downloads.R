@@ -1314,4 +1314,126 @@ if(FALSE)
 			    data.frame(species = colnames(data), taxonomy = "Insecta")
 			    )
         )
- }
+}
+
+# datasets on chiclids - each function downloads a community dataset for a different region
+
+if(FALSE)
+# metadata needs fixing
+# Kigoma town
+.britton.2017.a <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148126/BrittonEtAl2017_KigomaTown.csv?sequence=3", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]	
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+if(FALSE)
+# metadata needs fixing
+# Kigoma deforested
+.britton.2017.b <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148127/BrittonEtAl2017_KigomaDeforested.csv?sequence=3", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+if(FALSE)
+# metadata needs fixing
+# Kalilani village
+.britton.2017.c <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148128/BrittonEtAl2017_KalilaniVillage.csv?sequence=1", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+if(FALSE)
+# metadata needs fixing
+# Jakobsen's beach
+.britton.2017.d <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148129/BrittonEtAl2017_Jakobsen%27sBeach.csv?sequence=3", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+
+if(FALSE)
+# metadata needs fixing
+# Gombe stream
+.britton.2017.e <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148130/BrittonEtAl2017_GombeNP.csv?sequence=1", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+if(FALSE)
+# metadata needs fixing
+# Mahale mountain 1
+.britton.2017.f <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148131/BrittonEtAl2017_MahaleNPS1.csv?sequence=1", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
+
+if(FALSE)
+# metadata needs fixing
+# Mahale mountain 2
+.britton.2017.g <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148132/BrittonEtAl2017_MahaleNPS2.csv?sequence=3", tmp)
+	data <- read.csv(tmp, skip=1)
+	data <- data[-c(1,2),]
+	names(data)[1] <- "species"
+	comm <- t(data)
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
+	       ))
+}
