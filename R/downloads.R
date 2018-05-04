@@ -1299,3 +1299,19 @@ if(FALSE)
 	      )	       
 	)
 }
+
+# metadata needs fixing
+.bried.2017  <- function(...){
+	tmp <- tempfile()
+	download.file("https://datadryad.org/bitstream/handle/10255/dryad.151171/Dryad.data.xlsx?sequence=1", tmp)
+	data <- read.xls(tmp, 1)
+	n <- paste(data$Latitude, data$Longitude, sep = "_")
+	comm <- data[,-c(1:4)]
+	comm$Region <- n
+	return(.matrix.melt(comm,
+			    data.frame(units = "#"),
+			    data.frame(id = rownames(data), year = 2017, name = , lat= , long = , address = "", area = NA)
+			    data.frame(species = colnames(data), taxonomy = "Insecta")
+			    )
+        )
+ }
