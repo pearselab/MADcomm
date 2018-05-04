@@ -1249,3 +1249,37 @@ if(FALSE){
   comm <- comm[,-3:-6]
   
 }
+
+# Doesn't work right now!!!
+if(FALSE)
+.mendonca.2018 <- function(...){
+	tmp <- tempfile()
+	download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp)
+	data <- read.csv(.unzip("CERRADO_SM_Capture.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
+	data <- data[!is.na(data$Individuals_captured),]
+	data$Year_finsh <- as.numeric(data$Year_finish)
+	data <- data[!is.na(data$Year_finish),]
+	ids <- paste(data$id, data$Year_finish)
+	#ids <- ids[-c(1513:1536)]
+	# lat/long data
+	tmp2 <- tempfile()
+	download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp2)
+	ll_data <- read.csv(.unzip("CERRADO_SM_Study_Site.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
+	ll_data <- ll_data[,c(1,7,8)]
+	ll_data$id <- unique(ids)
+	names(ll_data) <- c("id", "lat", "long")
+	ll_data$year <- ll_data$id; ll_data$name <- ll_data$id
+	ll_data$address <- "Cerrado ecosystem: Brazil, Boliva, Paraguay"; ll_data$area <- "live_trap"
+	return(.df.melt(data$Actual_species_name,
+			ids,
+			data$Individuals_captured,
+			data.frame(units = "#"),
+			ll_data,
+			data.frame(species = unique(data$Actual_species_name), taxonomy = "Animalia")
+	      )
+	)
+}
+
+.roder.2016 <- function(...){
+
+}
