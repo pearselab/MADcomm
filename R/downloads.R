@@ -1150,6 +1150,66 @@ if(FALSE)
     #point out it's a species list, essentially
 }
 
+.johnson.2017 <- function(...){
+  datam<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145772/Species_x_SiteMatrix.csv?sequence=1", as.is=TRUE)
+  sitedataA<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.148018/RawSoilData.csv?sequence=1",as.is = TRUE)
+  sitedataB<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145776/VacantLot_DemolitionDate.csv?sequence=1",as.is = TRUE)
+  sppdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145777/Species_x_TraitsMatrix.csv?sequence=1",as.is = TRUE)
+  
+  comm<-datam[,-(1:2)]
+  
+  sitedataB <- rbind(sitedataB, sitedataB)
+  sitedataB$new.code <- paste(sitedataB$Code, rep(c("BF","RG"), each=nrow(sitedataB)/2), sep=".")
+  sitedataA$new.code <- paste(sitedataA$LotID, rep(c("BF","RG"), each=nrow(sitedataA)/2), sep=".")
+  
+  sitedata<-merge(sitedataA,sitedataB,by="new.code",all.x=TRUE,all.y = TRUE)
+  names(sitedata)[c(1,27)] <- c("id","address")
+  sitedata$lat <- NA;sitedata$long <-NA; sitedata$area <- NA
+  sitedata$year <- "2012-2013"
+  sitedata$name <- sitedata$id
+  names(sppdata)[1:2] <- c("species","taxonomy")
+  
+  return(.matrix.melt(comm,
+                data.frame(units="percent"),
+                sitedata,
+                sppdata)
+  )
+}
+
+.harrower.2017<-function(...){
+  
+  birddata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159186/bird_data.csv?sequence=1",as.is = TRUE)
+  envdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159187/envr_data.csv?sequence=1",as.is=TRUE)
+  
+  envdata$name<-paste(envdata$block,envdata$transect,sep="_")
+  
+  birddata$id<-paste(birddata$block,birddata$transect,birddata$year,sep="_")
+  birddata$name<-paste(birddata$block,birddata$transect,sep="_")
+  birddata$lat<-"50o39'59" N" 
+  birddata$long<-"120o19'09" W" 
+  birddata$address<- "Lac du Bois Provincial Park near Kamloops, British Columbia, Canada"
+  birddata$area<-"20ha"
+  birddata$binom<-paste(birddata$genus,birddata$species,sep=".")
+  
+  comm <- with(birddata, tapply(binom, list(binom, site), length))
+  comm[is.na(comm)] <- 0
+  comm<-t(comm)
+  
+  birdsub<-birddata[!duplicated(birddata$site),]
+  envsub<-envdata[,c(3,8)]
+  envtest<-merge(birdsub,envsub,by="name")
+  envtest<-envtest[,-c(6:11,17)]
+  
+  return(.matrix.melt(comm,
+                      data.frame(units="#"),
+                      envtest,
+                      data.frame(species=birddata$binom, taxonomy=NA)
+                      )
+         )
+}
+
+
+
 ##########
 # Sylvia's
 ##########
