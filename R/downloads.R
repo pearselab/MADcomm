@@ -1025,3 +1025,77 @@ if(FALSE)
     #count them up, all fine
     #point out it's a species list, essentially
 }
+
+
+
+.martins.2018 <- function(...){
+    data <- read.csv(.unzip("bee_community.csv", suppdata("10.5061/dryad.841vq48", "Martins_et_al_2018_data_files.zip")))
+    names(data) <- tolower(names(data))
+    comm <- as.matrix(data[,-1:-2])
+    rownames(comm) <- paste(data$x, data$fruit, sep="_")
+
+    lookup <- read.csv(.unzip("bee_names.csv", suppdata("10.5061/dryad.841vq48", "Martins_et_al_2018_data_files.zip")), as.is=TRUE)
+    lookup <- setNames(lookup[,2], tolower(lookup[,1]))
+    colnames(comm) <- unname(lookup[colnames(comm)])
+
+    return(.matrix.melt(comm,
+                        data.frame(units="#"),
+                        data.frame(id=rownames(comm), name=rownames(comm), year=NA, lat=NA, long=NA, address=NA, area=NA),
+                        data.frame(species=colnames(comm), taxonomy=NA)))
+}
+
+
+petermann.2016 <- function(...){
+    data <- read.xls(suppdata("10.5061/dryad.9ts28", "Petermann16PLOSONE_data_for_dryad.xlsx"))
+
+    comm <- as.matrix(data[,16:55])
+    rownames(comm) <- with(data, paste(Code_NEW, Date_of_sampling))
+    
+    return(.matrix.melt(comm,
+                        data.frame(units="p/a", treatment="artificial treehole communities"),
+                        data.frame(id=rownames(comm), name=data$Code_NEW, year=data$Date_of_sampling, lat=NA, long=NA, address=NA, area="artificial treehole"),
+                        data.frame(species=colnames(comm), taxonomy=NA)))
+}
+
+
+
+.matos.2017 <- function(...){
+    usa <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"))[,-1])
+    eu <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 2)[,-1])
+    eum <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 3)[,-1])
+
+    lookup <- read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 4, as.is=TRUE)
+    lookup$Species.name <- sanitize_text(lookup$Species.name)
+    lookup$Species.name <- sapply(strsplit(lookup$Species.name, " "), function(x) paste(x[1:2], collapse="_"))
+    lookup <- setNames(lookup$Species.name, lookup$Code)
+
+    colnames(usa) <- lookup[colnames(usa)]
+    colnames(eu) <- lookup[colnames(eu)]
+    colnames(eum) <- lookup[colnames(eum)]
+
+    rownames(usa) <- paste("usa",seq_len(nrow(usa)), sep="_")
+    rownames(eu) <- paste("eu",seq_len(nrow(eu)), sep="_")
+    rownames(eum) <- paste("eum",seq_len(nrow(eum)), sep="_")
+    
+    data <- rbind(matrix2sample(usa), matrix2sample(eu), matrix2sample(eum))
+
+    return(.df.melt(data$id, data$plot, data$abund,
+                    data.frame(units="p/a"),
+                    data.frame(id=unique(data$plot), name=unique(data$plot), year=2013, lat=NA, long=NA, address=NA, area="NW America; European Union"),
+                    data.frame(species=unique(data$id), taxonomy=NA)))
+}
+
+
+.russo.2015 <- function(...){
+    species <- read.xls(suppdata("10.5061/dryad.6cr82", "DataforDryad_netmaludome.xlsx"), header=FALSE, as.is=TRUE, nrow=2)[2:1,]
+    species <- unname(apply(as.matrix(species), 2, paste, collapse="_"))[-1]
+
+    data <- read.xls(suppdata("10.5061/dryad.6cr82", "DataforDryad_netmaludome.xlsx"), as.is=TRUE, skip=3)
+    comm <- as.matrix(data[,-1])
+    colnames(comm) <- species; rownames(comm) <- data[,1]
+    return(.matrix.melt(comm,
+                        data.frame(units="#"),
+                        data.frame(id=rownames(comm), name=colnames(comm), year="2008-2013", lat=NA, long=NA, address=NA, area="New York state, USA"),
+                        data.frame(species=colnames(comm), taxonomy=NA)
+                        ))
+}
