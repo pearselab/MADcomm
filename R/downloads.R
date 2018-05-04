@@ -1455,6 +1455,60 @@ petermann.2016 <- function(...){
          )
 }
 
+.lorite.2017<-function(...){
+  expdata<-read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", nrows=410)
+  lookup <- read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", skip=414, nrows=34,as.is = TRUE,header = FALSE)
+  lookup<-lookup[,1:2]
+  expdata$new.site<-paste(expdata$Site,expdata$transect,expdata$quadrat,sep="_")
+  names(expdata)[7:40]<-lookup[,2]
+  
+  comm<-cbind(id=expdata[,41],expdata[,7:40])
+  
+  #needs meta data, loc: scattered through paper/tables but existant.
+  
+  return(.matrix.melt(comm,
+                      data.frame(units="percent"),
+                      data.frame(id=comm$id,year=NA),
+                      data.frame(species=lookup[,2],taxonomy=NA)
+    
+  ))
+}
+
+
+.osuri.2016<-function(...){
+  expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.109139/Osuri_Sanakran_2016_JAE_plot_data.csv?sequence=2",as.is = TRUE)
+
+  comm <- with(expdata, tapply(species, list(species, site.name), length))
+  comm[is.na(comm)] <- 0
+  comm<-t(comm)
+  
+  #meta data is limited, what could be easily found is in the expdata  data frame
+  
+  return(.matrix.melt(comm,
+                      data.frame(units="#"),
+                      sitedata,
+                      data.frame(species=expdata$species,taxonomy=NA)
+                      )
+         )
+}
+
+.drew.2015<-function(...){
+  expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.93108/Supplemental%201.csv?sequence=1",as.is = TRUE)
+  expdata$binom<-paste(expdata$Genus,expdata$species,sep=".")
+  
+  comm<-t(expdata[,4:6])
+  colnames(comm)<-expdata$binom
+  
+  #meta data is basically not a thing, so this may need to be scrapped after all
+  
+  return(.matrix.melt(comm,
+                      data.frame(units="p/a"),
+                      sitedata,
+                      data.frane(speccies=expdata$binom,taxonomy=NA)
+                      )
+         )
+}
+
 .oswald.2015 <- function(...){
   data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.56p0f", "Oswald_et_al_2015_dryad.56p0f.xlsx"))) 
   comm <- data[,-13]
