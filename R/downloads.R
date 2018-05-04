@@ -1,4 +1,4 @@
-####################
+#####################
 # ADD DOIs ##########
 #####################
 
@@ -11,9 +11,12 @@
     comm[is.na(comm)] <- 0
     year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
     name <- substr(rownames(comm), 1, 4)
-    return(.matrix.melt(comm, 
+    return(.matrix.melt(comm,
+		       # units	
                         data.frame(units="area"),
+			# site meta
                         data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",area="1m2"), 
+			# species
                         data.frame(species=colnames(comm),taxonomy=NA)))
 }
 
@@ -1145,4 +1148,76 @@ if(FALSE)
     #Missoula County, Montana, USA
     #count them up, all fine
     #point out it's a species list, essentially
+}
+
+##########
+# Sylvia's
+##########
+
+# this function downloads tree data
+.wang.2017.a <- function(...){
+	tmp <- tempfile()
+	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+	tree_data <- read.xls(tmp, 1) 
+	plot_ids <- tree_data$Plot.number
+	# lat/long data
+	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+	ll_data <- read.csv(tmp, sep = ";")
+	names(ll_data) <- c("forest_type", "id", "lat", "long")
+	ll_data$year <- 2017; ll_data$name <- ll_data$id
+	ll_data$forest_type <- NULL
+	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
+	return(.df.melt(tree_data$species_name,
+			plot_ids,
+			tree_data$diameter.at.breat.height..cm.,
+			data.frame(units = "dbh"),
+			ll_data,
+        		data.frame(species= tree_data$species_name, taxonomy="Plantae")
+))
+}
+
+# this function downloads shrub data
+.wang.2017.b <- function(...){
+	tmp <- tempfile()
+	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+	shrub_data <- read.xls(tmp, 2)
+	plot_ids <- shrub_data$Plot_number
+	# lat/long data
+	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+	ll_data <- read.csv(tmp, sep = ";")
+	names(ll_data) <- c("forest_type", "id", "lat", "long")
+	ll_data$year <- 2017; ll_data$name <- ll_data$id
+	ll_data$forest_type <- NULL
+	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
+	return(.df.melt(shrub_data$species_name,
+			plot_ids,
+			shrub_data$coverage,
+			data.frame(units = "%"),
+			ll_data,
+			data.frame(species = shrub_data$species_name, taxonomy = "Plantae")
+	      )
+	)
+}
+
+# this function downloads herb data
+.wang.2017.c <- function(...){
+	tmp <- tempfile()
+	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+	herb_data <- read.xls(tmp, 3)
+	plot_ids <- herb_data$Plot_number
+	# lat/long data
+	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+	ll_data <- read.csv(tmp, sep = ";")
+	names(ll_data) <- c("forest_type", "id", "lat", "long")
+	ll_data$year <- 2017; ll_data$name <- ll_data$id
+	ll_data$forest_type <- NULL
+	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
+	return(.matrix.melt(shrub_data$species_name,
+			    plot_ids,
+			    shrub_data$coverage,
+			    data.frame(units = "%"),
+			    ll_data,
+			    data.frame(species = herb_data$species_name, taxonomy = "plantae")
+      		)
+	)
 }
