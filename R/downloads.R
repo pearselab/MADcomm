@@ -1187,3 +1187,68 @@ if(FALSE)
     site.metadata,
     species.metadata=data.frame(species=unique(taxon), taxonomy=NA)))
 }
+
+.mcknight.year <- function(...){
+  data <- read.csv(file="https://pasta.lternet.edu/package/data/eml/knb-lter-mcm/12/3/7f8537c0f0f80a255551ad61d9d512dc",header=TRUE)
+
+  species <- unique(data$Species)
+  data$id <- rep(paste(data$Location,data$Date))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id, year=Date, name=Location, lat=NA,long=NA, address="antarctica",area=NA)
+  )
+  site <- rep(paste(data$Location,data$Date), 27)
+  abundance <- as.vector(data[,10])
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site, abundance,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+  ))
+}
+
+.nps.1998 <- function(...){
+  temp <- tempfile()
+  download.file("https://irma.nps.gov/DataStore/DownloadFile/567456", temp)
+  data <- read.xls(temp, as.is=TRUE)
+
+  species <- data$Local.Taxon.Name
+  data$id <- data$Plot_Event
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+    data.frame(id=id,
+      year=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[2]),
+      name=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[1]),
+      lat=NA, long=NA, address=NA,area=NA)
+  )
+  site <- rep(data$Plot_Event, 1091)
+  abundance <- as.vector(data[,11])
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site, abundance,
+    study.metadata=data.frame(units="%"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+  ))
+}
+
+.ylanne.2018 <- function(...){
+  data <- read.xls(suppdata("10.5061/dryad.bb49h", "Ylanne_etal_2017_FunctEcol_data.xlsx"), skip=1, sheet=3)
+
+  species <- rep(names(data)[9:82], each=nrow(data))
+  year <- '2014'
+  data$id <- rep(paste(data$Plot,data$year))
+  site.metadata <- data[!duplicated(data$id),]
+  site.metadata <- with(site.metadata,
+      data.frame(id=id, year=year, name=Plot, lat=NA,long=NA, address=NA,area=Area)
+  )
+  site <- rep(paste(data$Plot,data$Year), 74)
+  abundance <- unname(unlist(data[,9:82]))
+  abundance[is.na(abundance)] <- 0
+
+  return(.df.melt(species, site , abundance,
+    study.metadata=data.frame(units="#"),
+    site.metadata,
+    species.metadata=data.frame(species=unique(species), taxonomy=NA)))
+}
