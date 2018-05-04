@@ -1182,6 +1182,13 @@ if(FALSE)
                       data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
-
-
+if(FALSE){
+.tomasovych.2010a <- function(...){
+  species <- read.xls(suppdata("10.5061/dryad.1225", "abundances-S California 1975.xls"), skip=1, header=TRUE)
+  species.clean <- species[,-1]
+  comm <- t(as.matrix(species.clean))
+  rownames(comm) <- species$X
+  rownames(comm)
+}
+}
 
