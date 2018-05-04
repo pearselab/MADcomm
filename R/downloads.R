@@ -1251,6 +1251,7 @@ if(FALSE){
 }
 
 # Doesn't work right now!!!
+# need to fix the years
 if(FALSE)
 .mendonca.2018 <- function(...){
 	tmp <- tempfile()
@@ -1280,6 +1281,21 @@ if(FALSE)
 	)
 }
 
-.roder.2016 <- function(...){
-
+# in progress
+# Error in data.frame(id = rownames(data), year = years, name = names, lat = NA, : arguments imply differing number of rows: 20, 24, 1 
+.sepulveda.2016 <- function(...){
+	tmp <- tempfile()
+	download.file("http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0157910.s001", tmp)
+	data <- read.xls(tmp, 1, skip=1, fileEncoding="Latin1")
+	data <- data[1:20,]
+	years <- colnames(data)[2:25]
+	names(data) <- c("species", paste(rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4), names(data)[2:25], sep="_"))
+	d2 <- t(data)
+	names <- rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4)
+	return(.matrix.melt(data,
+			   data.frame(units = "#"),
+			   data.frame(id = rownames(data), year = years, name= names, lat= NA, long= NA, address="Southwestern Chilean coast", area = NA), 
+                           data.frame(species=colnames(data), taxonomy = NA)
+	      )	       
+	)
 }
