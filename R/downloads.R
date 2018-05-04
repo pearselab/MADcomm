@@ -1182,7 +1182,30 @@ if(FALSE)
                       data.frame(units="#"),
                       data.frame(id=site_pc, name=site.metadata$Site, year=2011, lat=site.metadata$X, long=site.metadata$Y, address="Southern Costa Rica, around the Las Cruces Biological Station ", area=site.metadata$Area),
                       species.meta))
-}
+  
+  
+  .brant.2018 <- function(...){
+    tmp.file <- tempfile()
+    download.file("https://zenodo.org/record/1198846/files/template_MosquitoDataBrant77.xlsx", tmp.file)
+    DailyHLC <- read.xls(tmp.file, sheet=4, as.is=TRUE, skip=9)
+    lookup <- read.xls(tmp.file, sheet=3, as.is=TRUE)
+    lookup[,2] <- sanitize_text(lookup[,2])  
+    #lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
+    lookup <- setNames(lookup[,2], lookup[,1])
+    names(DailyHLC) <- gsub("_count", "", names(DailyHLC), fixed=TRUE)
+    names(lookup) <- gsub(".", "_", names(lookup), fixed=TRUE)
+    names(DailyHLC)[names(DailyHLC) %in% names(lookup)] <- lookup[names(DailyHLC)[names(DailyHLC) %in% names(lookup)]]
+    DailyHLC$site_year <- with(DailyHLC, paste(field_name, Location, Date, sep="_"))
+    #community matrix
+    comm <- as.matrix(DailyHLC[,c(-1:-7,-ncol(DailyHLC))])
+    rownames(comm) <- DailyHLC$site_year
+    site.metadata <- DailyHLC[,1:7]
+    species.meta <- data.frame(species=colnames(comm), taxonomy="Insecta")
+    return(.matrix.melt(comm,
+                        data.frame(units="#"),
+                        data.frame(id=DailyHLC$site_year, name=site.metadata$Location, year=site.metadata$Date, lat="4.6353 to 4.9654", long="116.9542 to 117.8004", address="SAFE project, Borneo", area="attracted to humans"),
+                        species.meta))
+  }
 
 .truxa.2015 <- function(...){
   data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
