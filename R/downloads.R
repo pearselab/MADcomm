@@ -1147,13 +1147,12 @@ if(FALSE)
     #point out it's a species list, essentially
 }
 
-if(FALSE)
 .valtonen.2017 <- function(...){
   species <- read.xls(suppdata("10.5061/dryad.9m6vp/1", "valtonen_etal_JAE.xlsx"))
   comm <- as.matrix(species[,-1:-2])
   rownames(comm) <- paste(species$Site, species$Year)
   
-  return(.matrix.melt(comm,
+    return(.matrix.melt(comm,
                       data.frame(units="#", treatment="light_trap"),
                       data.frame(id=rownames(comm), year=species$Year, name=species$Site, lat=NA, long=NA, address = paste0(species$Site, ", Hungary"), area="light_trap"),
                       data.frame(species=colnames(comm), taxonomy=NA)))
