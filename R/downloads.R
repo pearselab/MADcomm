@@ -1485,16 +1485,43 @@ if(FALSE)
   comm <- as.matrix(species[,-1:-2])
   rownames(comm) <- paste(species$Site, species$Year)
   
-  .matrix.melt(comm,
-               data.frame(units="#", treatment="light_trap"),
-               data.frame(id=rownames(comm), year=species$Year, name=species$Site, lat=NA, long=NA, address = paste0(species$Site, ", Hungary"), area="light_trap"),
-               data.frame(species=colnames(comm), taxonomy=NA))
+    return(.matrix.melt(comm,
+                      data.frame(units="#", treatment="light_trap"),
+                      data.frame(id=rownames(comm), year=species$Year, name=species$Site, lat=NA, long=NA, address = paste0(species$Site, ", Hungary"), area="light_trap"),
+                      data.frame(species=colnames(comm), taxonomy=NA)))
+}  
 
+.boyle.2015 <- function(...){
+  species <- read.csv(suppdata("10.5061/dryad.bf486", "BritishColumbiaHighElevationBirdDataset.csv"))
+  species$SiteCombo <- paste0(species$MountainRange, "-", species$SiteName)
+  comm <- with(species, tapply(NBirds, list(SiteCombo, CommonName), sum))
+  comm[is.na(comm)] <- 0
+  site.metadata <- species[!duplicated(species$SiteCombo),]
+  site.metadata <- site.metadata[,c("Date", "Wind", "Temp", "Cloud", "AM.PM", "HaSurveyed", "SiteCombo")]
+  return(.matrix.melt(comm,
+                      data.frame(units="#", treatment=NA),
+                      data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
+                      data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
-if(FALSE){
+.jain.2017 <- function(){
+  species <- read.xls(suppdata("10.5061/dryad.177q4", "Jain_etal_2016_Butterfly%20abundance%20across%20sites_22Dec2016.xlsx"), skip=5, header=TRUE, as.is=TRUE)
+  species.clean <- species[,c(-1:-15,-38)]
+  comm <- t(as.matrix(species.clean))
+  colnames(comm) <- species$Scientific.name
+  return(.matrix.melt(comm,
+                      data.frame(units="#", treatment=NA),
+                      data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
+                      data.frame(species=colnames(comm), taxonomy=NA)))
+}
+  if(FALSE){
   species <- read.csv(suppdata("10.5061/dryad.bf486", "BritishColumbiaHighElevationBirdDataset.csv"))
   comm <- as.matrix(species[,-1:-13])
   comm <- comm[,-2:-4]
   comm <- comm[,-3:-6]  
+
 }
+
+
+
+
