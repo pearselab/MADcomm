@@ -1,4 +1,4 @@
-clean.natdb <- function(x){
+clean.nacdb <- function(x){
     # Argument handling
     if(!inherits(x, "nacdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
@@ -14,6 +14,7 @@ clean.natdb <- function(x){
 # This does more thorough cleaning of species names. Will likely
 # require the addition of some sort of cache, as there will be
 # *thousands* of species names that need adding in here
+#' @importFrom taxize gnr_resolve
 clean.nacdb.names <- function(x, thresh, ...){
     # Argument handling
     if(!inherits(x, "natdb"))

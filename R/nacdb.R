@@ -26,7 +26,7 @@
 #' # Limit the scope of these as they have to work online on servers!...
 #' #@seealso 
 #' @export
-
+#' @importFrom gdata ls.funs
 nacdb <- function(cache, datasets, delay=5){
     #Check datasets
     if(missing(datasets)){
@@ -164,16 +164,21 @@ citations <- function(x){
     return(as.character(nacdb.citations$BibTeX.citation[match(datasets, nacdb.citations$Name)]))
 }
 
-#' @method subset nacdb
-#' @export
-subset.study <- function(x, studies, ...){
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+# I added this during ARGON, and while it's useful I think I need to
+# think a little more coherently abotu how to let users interact with
+# study-level meta-data
+if(FALSE){
+    #' @method subset nacdb
+    #' @export
+    subset.study <- function(x, studies, ...){
+        if(!inherits(x, "nacdb"))
+            stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
 
-    x$data <- x$data[x$data$study %in% studies,]
-    x$spp.metadata <- x$spp.metadata[x$spp.metadata$study %in% studies,]
-    x$site.metadata <- x$site.metadata[x$site.metadata$study %in% studies,]
-    x$study.metadata <- x$study.metadata[x$study.metadata$study %in% studies,]
+        x$data <- x$data[x$data$study %in% studies,]
+        x$spp.metadata <- x$spp.metadata[x$spp.metadata$study %in% studies,]
+        x$site.metadata <- x$site.metadata[x$site.metadata$study %in% studies,]
+        x$study.metadata <- x$study.metadata[x$study.metadata$study %in% studies,]
 
-    return(x)
+        return(x)
+    }
 }

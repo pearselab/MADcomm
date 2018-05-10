@@ -1,10 +1,13 @@
 #####################
 # ADD DOIs ##########
 #####################
-
 #' @importFrom suppdata suppdata
-#' @importFrom utils data head read.csv
-#' @importFrom stats aggregate na.omit
+#' @importFrom utils data head read.csv read.delim read.table
+#' @importFrom stats aggregate na.omit reshape
+#' @importFrom gdata drop.levels
+#' @importFrom testdat sanitize_text
+#' @importFrom readxl read_xlsx read_xls read_excel
+#' @export
 .adler.2007 <- function(...){
     data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
     comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
@@ -17,6 +20,7 @@
                         data.frame(species=colnames(comm),taxonomy=NA)))
 }
 
+#' @export
 .anderson.2011 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3551799.v1", "annuals_counts_v2.csv"), as.is=TRUE)
     data$plot_year <- with(data, paste(quad, year, sep = "_"))
@@ -36,6 +40,7 @@
 # - all of these could use a bit of DRY love; there's a lot of repetition. A task for another day...
 # Mammals
 #' @importFrom nneo nneo_sites nneo_product nneo_data
+#' @export
 .neon.2018a <- function(...){
     # Internal wrapper
     .site <- function(month, site){
@@ -72,6 +77,7 @@
     return (.df.melt(output$scientificName, output$id, output$weight, data.frame(units="g"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 # Beetles
+#' @export
 .neon.2018b <- function(...){
     # Internal wrapper
     .site <- function(month, site){
@@ -107,6 +113,7 @@
     return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 # Plants
+#' @export
 .neon.2018c <- function(...){
     # Internal wrapper
     .site <- function(month, site){
@@ -152,6 +159,7 @@
     return (.df.melt(output$scientificName, output$id, output$abundance, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 
+#' @export
 .chu.2016 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
     site.info <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "quad_info.csv"))
@@ -171,6 +179,7 @@
                         data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
+#' @export
 .lynch.2013 <- function(...){
     full.data <- read.csv(suppdata("E094-243", "Antarctic_Site_Inventory_census_data_1994_2012.csv", from = "esa_archives"))
     full.data$Site_name <- gsub("[^A-Za-z0-9_.]", "", full.data$Site_name)
@@ -199,6 +208,7 @@
 }
 
 #' @importFrom gdata read.xls
+#' @export
 .broadway.2015 <- function(...){
     #Fish abundance data for Wabash River for years 1974 - 2008.
     data <- read.xls(suppdata("10.1371/journal.pone.0124954", 1))
@@ -228,6 +238,7 @@ clean.predicts <- function(data) {
     return(data.temp)
 }
 
+#' @export
 .predicts.2016a <- function(...) {
     download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts_abundance.RDS")
     data <- readRDS("predicts_abundance.RDS")
@@ -246,6 +257,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#' @export
 .predicts.2016b <- function(...) {
     download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
     data <- readRDS("predicts.RDS")
@@ -264,6 +276,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#' @export
 .predicts.2016c <- function(...) {
     download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
     data <- readRDS("predicts.RDS")
@@ -282,6 +295,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#' @export
 .predicts.2016d <- function(...) {
     download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
     data <- readRDS("predicts.RDS")
@@ -304,6 +318,7 @@ clean.predicts <- function(data) {
 # - ranges within the data. The median percentages were taken for each of the cover codes and used
 # - as the quantity
 # return a long format table
+#' @export
 .mcglinn.2010 <- function(...){
     # Data of plant cover in the 100m^2 plot
     data <- read.csv(suppdata("E091-124", "TGPP_cover.csv", from = "esa_archives"))
@@ -333,6 +348,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="plantae")))
 }
 
+#' @export
 .chazot.2014 <- function(...){
     #Abundance data for butterfly species from seven different sites.
     data <- read.xls(suppdata("10.5061/dryad.1534j", "Abundance_dataset.xlsx"), skip = 1)
@@ -346,6 +362,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy="Lepidoptera")))
 }
 
+#' @export
 .rodriguezBuritica.2013 <- function(...){
     data <- read.csv(suppdata("E094-083","SMCover.csv",from = "esa_archives"))
     species.data <- read.csv(suppdata("E094-083","Species.csv",from = "esa_archives"))
@@ -364,6 +381,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy=NA)))
 }
 
+#' @export
 .hellmann.2013 <- function(...){
     temp <- tempfile()
     download.file("http://esapubs.org/archive/ecol/E094/126/MosquitoDB.zip", temp)
@@ -382,6 +400,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy="Diptera")))
 }
 
+#' @export
 .anderson.2012 <- function(...){
     data <- read.csv(suppdata("E093-132", "allrecords_point_features.csv", from = "esa_archives"))
     data$plotyear <- with(data, paste(quad, year, sep = "_"))
@@ -396,6 +415,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(comm), taxonomy="Plantae")))
 }
 
+#' @export
 .andradiBrown.2016 <- function(...){
     #Abundance data for coral fish at 7 different sites in the Great Barrier Reef.
     data <- read.csv(suppdata("10.1371/journal.pone.0156641",3))
@@ -414,6 +434,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(new.data), taxonomy="Chordata")))
 }
 
+#' @export
 .stevens.2011 <- function(...){
     data <- read.csv(suppdata("E092-128", "speciesdata.csv", from="esa_archives"), encoding="latin1")
     metadata <- read.csv(suppdata("E092-128", "environmentaldata.csv", from="esa_archives"), encoding="latin1")
@@ -434,6 +455,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy=NA)))
 }
 
+#' @export
 .laverick.2017 <- function(...){
     data <- read.csv(suppdata("10.1371/journal.pone.0183075",7), stringsAsFactors=FALSE)
     rownames(data) <- data$X
@@ -444,6 +466,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy=NA)))
 }
 
+#' @export
 .jian.2014 <- function(...){
     data <- read.csv(suppdata("10.1371/journal.pone.0114301", 5))
     data$site <- with(data, paste(site, date, sep = "_"))
@@ -470,6 +493,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformedData), taxonomy=NA)))
 }
 
+#' @export
 .heidi.2018 <- function(...) {
     data <- read.xls("Heidi_Species_Cover_2017_Final_121817.xlsx", sheet=2, stringsAsFactors=FALSE)
     metadata <- read.xls("SiteSpeciesList_argon.xlsx", fileEncoding="latin1", stringsAsFactors=FALSE)
@@ -492,6 +516,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$Species.Ground.Cover), taxonomy=NA)))
 }
 
+#' @export
 .ogutu.2017 <- function(...){
     data <- read.xls(suppdata("10.1371/journal.pone.0169730", 3))
     data <- data[,1:3]
@@ -509,6 +534,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformedData), taxonomy=NA)))
 }
 
+#' @export
 .baldridge.2013 <- function(...){
     abundance_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Species_abundances.csv"))
     site_data <- read.csv(suppdata("10.6084/m9.figshare.769251.v1", "Sites_table_abundances.csv"))
@@ -529,6 +555,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#' @export
 .gallmetzer.2017 <- function(...){
     data <- read.xls(suppdata("10.1371/journal.pone.0180820", 1), stringsAsFactors=FALSE)
     data <- data[-c(1,58,114,116,120,122:nrow(data)),-c(2:5, 78)]
@@ -544,6 +571,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformedData), taxonomy="Mollusca")))
 }
 
+#' @export
 .sal.2013 <- function(...){
     species.data <- read.csv(suppdata("E094-149", "table3.csv", from = "esa_archives"), stringsAsFactors=FALSE)
     site.data <- read.csv(suppdata("E094-149", "table1.csv", from = "esa_archives"), stringsAsFactors=FALSE)
@@ -563,6 +591,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(species.data), taxonomy="Chromista")))
 }
 
+#' @export
 .raymond.2011 <- function(...){
     data <- read.csv(suppdata("E092-097", "diet.csv", from = "esa_archives"), encoding="latin1")
     data$date <- format(as.Date(data$OBSERVATION_DATE_END, format="%d/%m/%Y"),"%Y")
@@ -584,6 +613,7 @@ clean.predicts <- function(data) {
 }
 
 #' @importFrom reshape2 melt
+#' @export
 .boyle.2015 <- function(...) {
     # This dataset is combining 23 years of observations at one site. They combine
     # the counts (which are not in the dataset) to get the mean abundance across
@@ -599,6 +629,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$ScientificName), taxonomy="Aves")))
 }
 
+#' @export
 .myster.2010 <- function(...){
     addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-luq/100/246250/f718e683c7c425207c7d1f7adeddf85f"
     addr <- sub("^https","http", addr)
@@ -614,10 +645,11 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
 }
 
+#' @export
 .schmitt.2012 <- function(...){
     addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/46/3/4ded739e78e50552837cf100f251f7ab"
     addr <- sub("^https","http",addr)
-    data <-read.csv(addr,header=F, skip=1, sep=",", quot='"',
+    data <-read.csv(addr,header=F, skip=1, sep=",", quote='"',
                     col.names=c("YEAR", "MONTH", "DATE", "SITE", "DEPTH", "REP",
                                 "SP_CODE", "COUNT", "COMMENTS", "Common_Name",
                                 "taxon_GROUP", "SURVEY", "taxon_PHYLUM",
@@ -634,6 +666,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="Pycnopodia")))
 }
 
+#' @export
 .reed.2017a <- function(...) {
     data <-read.csv("http://pasta.lternet.edu/package/data/eml/knb-lter-sbc/17/30/a7899f2e57ea29a240be2c00cce7a0d4", as.is=TRUE)
     names(data) <- tolower(names(data))
@@ -650,11 +683,12 @@ clean.predicts <- function(data) {
     year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
     name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
     return(.matrix.melt(data,
-                    data.frame(units="#"),
-                    data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
-                    data.frame(species=colnames(data), taxonomy=NA)))
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
+                        data.frame(species=colnames(data), taxonomy=NA)))
 }
 
+#' @export
 .reed.2017b <- function(...) {
     data <-read.csv("https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/19/23/5daf0da45925ba9014872c6bc9f6c8bb")
     names(data) <- tolower(names(data))
@@ -669,25 +703,26 @@ clean.predicts <- function(data) {
     year <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,3]
     name <- matrix(unlist(temp), ncol=3, byrow=TRUE)[,1]
     return(.matrix.melt(data,
-                    data.frame(units="#"),
-                    data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
-                    data.frame(species=colnames(data), taxonomy=NA)))
+                        data.frame(units="#"),
+                        data.frame(id=rownames(data), year, name, lat=NA, long=NA, address=NA, area=NA),
+                        data.frame(species=colnames(data), taxonomy=NA)))
 }
 
+#' @export
 .nichols.2006 <- function(...) {
     addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-ntl/61/3/wgnhs_macrophyte_aquaplt2"
     addr <- sub("^https","http",addr)
-    abundanceData <-read.csv(addr, header=F, skip=1, sep=",", quot='"',
+    abundanceData <-read.csv(addr, header=F, skip=1, sep=",", quote='"',
                              col.names=c("mwbc", "lake_unique", "lakename",
                                          "county", "county_id", "month", "year4",
                                          "spcode", "aqstano", "visual_abundance"),
                              check.names=TRUE)
     specAddr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-ntl/61/3/wgnhs_macrophyte_pltname"
     specAddr <- sub("^https","http",specAddr)
-    specData <-read.csv(specAddr, header=F, skip=1, sep=",", quot='"',
-                   col.names=c("spcode", "spec_no", "scientific_name",
-                                "common_name", "lifeform", "spec_category",
-                                "genus"), check.names=TRUE)
+    specData <-read.csv(specAddr, header=F, skip=1, sep=",", quote='"',
+                        col.names=c("spcode", "spec_no", "scientific_name",
+                                    "common_name", "lifeform", "spec_category",
+                                    "genus"), check.names=TRUE)
     abundanceData$site.year <- with(abundanceData, paste(lakename, year4, sep=">"))
     abundanceData$species <- specData$scientific_name[match(abundanceData$spcode, specData$spcode)]
     data <- with(abundanceData, tapply(visual_abundance, list(site.year, species), sum, na.rm = TRUE))
@@ -701,6 +736,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy=NA)))
 }
 
+#' @export
 .wearn.2016a <- function(...) {
     addr <- "https://zenodo.org/record/44545/files/Wearn2016_cameratrap_species-abundance_matrix.csv"
     addr <- sub("^https","http",addr)
@@ -715,6 +751,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy="Mammalia")))
 }
 
+#' @export
 .wearn.2016b <- function(...) {
     addr <- "https://zenodo.org/record/44545/files/Wearn2016_livetrap_species-abundance_matrix.csv"
     addr <- sub("^https","http",addr)
@@ -729,19 +766,21 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy="Mammalia")))
 }
 
+#' @export
 .kaspari.2016 <- function(...) {
     addr  <- "https://pasta.lternet.edu/package/data/eml/msb-tempbiodev/1111170/1/cfd3a55deef52e3a93469057053f5404"
     addr <- sub("^https", "http", addr)
     data <-read.csv(addr, header=F, skip=1, sep=",",
                     col.names=c("location", "distance", "direction",
                                 "plotcode", "taxon", "abundance"),
-                                check.names=TRUE)
+                    check.names=TRUE)
     return(.df.melt(data$taxon, data$plotcode, data$abundance,
                     data.frame(units="#"),
                     data.frame(id=unique(data$plotcode), year="2016", name=unique(data$plotcode), lat=NA, long=NA, address=NA, area=NA),
                     data.frame(species=unique(data$taxon), taxonomy="Arthropoda")))
 }
 
+#' @export
 .phillips.2003 <- function(...) {
     temp <- tempfile()
     download.file("https://www.forestplots.net/upload/data-packages/phillips-et-al-2015/PeruTransectData.zip", temp)
@@ -767,6 +806,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(tData), taxonomy="Plantae")))
 }
 
+#' @export
 .biotime.2018 <- function(...) {
     data <- read.csv(url("https://zenodo.org/record/1095628/files/BioTIMEQuery_06_12_2017.csv"))
     metadata <- read.csv(url("https://zenodo.org/record/1095628/files/BioTIMEMetadata_06_12_2017.csv"))
@@ -799,6 +839,7 @@ clean.predicts <- function(data) {
     return(mapply(rbind, countData, paData))
 }
 
+#' @export
 .thibault.2011 <- function(...){
     abundance.data <- read.csv(suppdata("E092-201", "MCDB_communities.csv", from = "esa_data_archives"), as.is=TRUE)
     site.data <- read.csv(suppdata("E092-201", "MCDB_sites.csv", from = "esa_data_archives"), as.is=TRUE)
@@ -827,29 +868,11 @@ clean.predicts <- function(data) {
                      data.frame(species=unique(abundance.data$species),taxonomy=NA)))
 }
 
-.branstetter.2018 <- function(...) {
-    data <- read.csv("TableA3.csv")
-    metadata <- read.csv("TableA2.csv")
-    rownames(data) <- data[,1]
-    data[,1] <- NULL
-    colnames(data) <- gsub(".", "-", colnames(data), fixed=TRUE)
-    data <- t(data)
-    rownames(data) <- paste(rownames(data), year, sep="_")
-    metadata$year <- format(as.Date(metadata$datecollected, format="%d-%b-%Y"),"%Y")
-    year <- metadata$year[!duplicated(metadata$site)]
-    name <- unique(metadata$site)
-    lat <- metadata$latitude[!duplicated(metadata$site)]
-    long <- metadata$longitude[!duplicated(metadata$site)]
-    return(.matrix.melt(data,
-                        data.frame(units="#"),
-                        data.frame(id=rownames(data), year, name, lat, long,
-                                    address=NA, area=NA),
-                        data.frame(species=colnames(data), taxonomy="Hymenoptera")))
-}
 
+#' @export
 .collins.2018 <- function(...) {
     # The species in this dataset are not named; Generic identifiers are given (e.g. 'sp1')
-        # Species codes were added due to people not wanting scott to publish their data.
+    # Species codes were added due to people not wanting scott to publish their data.
     data <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/f69c8fe563067164191d61b6e33eff03",  as.is=TRUE)
     names(data) <- tolower(names(data))
     metadata <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/15/5/8284876afe3a1cb0a919d37e1164357f", as.is=TRUE)
@@ -873,6 +896,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
 }
 
+#' @export
 .franklin.2018 <- function(...) {
     data <- read.xls("CopyofWESTCOSPPCOVER.xlsx", as.is=TRUE)
     ground_data <- read.xls("WEST CO GROUND COVER.xlsx")
@@ -914,126 +938,6 @@ clean.predicts <- function(data) {
                                other="Plant study; Percent cover of species and ground")))
 }
 
-if(FALSE){
-.lightfoot.2016 <- function(...) {
-    data <- read.table("http://sev.lternet.edu/sites/default/files/data/sev-106/sev106_hopperdynamics_20150826.txt", header=T, sep=",")
-    data$month.year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
-    spec_codes <- c("ACPI","AGDE","AMCO","ARCO","ARPS","AUEL","AUFE","BOAR",
-                 "BRMA","CIPA","COCR","COOC","COTE","DABI","ERSI","HATR",
-                 "HERU","HEVI","HICA","LAAZ","LEWH","MEAR","MEAZ","MEBO",
-                 "MEGL","MELA","MEOC","METE","OPOB","PAPA","PHQU","PHRO",
-                 "PSDE","PSTE","SCNI","SYMO","TRCA","TRFO","TRKI","TRPA",
-                 "TRPI","XACO","XAMO")
-    species <- c("Acantherus piperatus","Ageneotettix deorum",
-                "Amphitornus coloradus","Arphia conspersa",
-                "Arphia pseudonietana","Aulocara elliotti",
-                "Aulocara femoratum","Bootettix argentatus",
-                "Brachystola magna","Cibolacris parviceps",
-                "Cordillacris crenulata","Cordillacris occipitalis",
-                "Conozoa texana","Dactylotum bicolor",
-                "Eritettix simplex","Hadtrotettix trifasciatus",
-                "Heliaula rufa","Hesperotettix viridis",
-                "Hippopedon capito","Lactista azteca","Leprus wheeleri",
-                "Melanoplus aridus","Melanoplus arizonae",
-                "Melanoplus bowditchi","Melanoplus gladstoni",
-                "Melanoplus lakinus","Melanoplus occidentalis",
-                "Mermeria texana","Opeia obscura","Paropomala pallida",
-                "Phlibostroma quadrimaculatum","Phrynotettix robustus",
-                "Psoloessa delicatula","Psoloessa texana",
-                "Schistocerca nitens","Syrbula montezuma",
-                "Trimerotropis californicus","Tropidolophus formosus",
-                "Trachyrhachis kiowa","Trimerotropis pallidipennis",
-                "Trimerotropis pistrinaria","Xanthippus corallipes",
-                "Xanthippus montanus")
-    metadata <- data.frame(spec_codes, species)
-    data$SPECIES <- metadata$species[match(data$SPECIES, metadata$spec_codes)]
-    data <- with(data, tapply(CNT, list(site_year, SPECIES), sum, na.rm=TRUE))
-    data$site_year <- with(data, paste(SITE, year, sep="_"))
-    temp <- strsplit(rownames(data), "_")
-    year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
-    year <- format(as.Date(data$DATE, format="%m/%Y"),"%Y")
-    name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
-    burned <-
-    return(.df.melt(data$species, data$SITE, data$CNT,
-                    data.frame(units="#"),
-                    data.frame(id=unique(data$plot_year),
-                               year,
-                               name,
-                               lat=NA,
-                               long=NA,
-                               address="Sevilleta National Wildlife Refuge, New Mexico",
-                               area=NA,
-                               burned),
-                    data.frame(species=unique(data$species), taxonomy="Orthoptera")))
-}
-
-.cobb.2016 <- function(...) {
-    data <- read.xls("COMPLETE Dataset as of 4_recovery2.xlsx")
-    data$name <- with(data, paste("study.area", Study.Area, "site", Site, sep="_"))
-    data$month.year <- with(data, paste(Month, Year, sep="-"))
-    data$site.year <- with(data, paste(name, month.year, sep="_"))
-    metadata <- data[,c(1:11, 148, 149, 150)]
-    metadata$Longitude <- gsub("\342\200\223", "-", metadata$Longitude)
-    data[,1] <- data$site.year
-    data[,c(2:11, 148, 149, 150)] <- NULL
-    data <- aggregate(.~Sample.., data=data, FUN=sum)
-    rownames(data) <- data[,1]
-    data[,1] <- NULL
-    rownames <- rownames(data)
-    data <- apply(data, 2, as.numeric)
-    rownames(data) <- rownames
-    name <- metadata$name[match(rownames(data), metadata$site.year)]
-    year <- metadata$Year[match(rownames(data), metadata$site.year)]
-    lat <- metadata$Latitude[match(rownames(data), metadata$site.year)]
-    long <- metadata$Longitude[match(rownames(data), metadata$site.year)]
-    veg.type <- metadata$Veg.type[match(rownames(data), metadata$site.year)]
-    burned <- metadata$Burn[match(rownames(data), metadata$site.year)]
-    monsoon <- metadata$Monsoon[match(rownames(data), metadata$site.year)]
-    return(.matrix.melt(data,
-                        data.frame(units="STD.#"),
-                        data.frame(id=rownames(data),
-                                   year,
-                                   name,
-                                   lat,
-                                   long,
-                                   address=NA,
-                                   area=NA,
-                                   veg.type,
-                                   burned,
-                                   monsoon),
-                        data.frame(species=colnames(data), taxonomy="Arthropoda")))
-}
-
-.mooney.2018 <- function(...) {
-    #will need to loop through and do this for each year (sheet) in the dataset.
-    data <- read.xls("Insect Abundance Population Summaries.xlsx", sheet="#")
-    data <- data[which(data$Response == "Total"),]
-    #remove all rows that contain only NA values
-    data <- data[ ,!apply(data, 2, function(x) all(is.na(x)))]
-    data <- melt(data, id=c("Population", "Response"))
-}
-
-.dyer.2017 <- function(...) {
-    # Location is not always GPS coordinates in this dataset. Some are descriptions or titles of the locations.
-    # Some of the values in data are blank. These do not mean that the value is zero but that the data is not complete. (Lee has the code to complete it).
-    data <- read.xls("SWRS_plots_updated_nov_3_2017.xlsx")
-    data<-data[,1:24]
-    data$year <- format(as.Date(data$Date..D.M.Y., format="%Y-%m-%d"),"%Y")
-    data$plot.year <- with(data, paste(X.number, year, sep="."))
-    return(.df.melt(data$plant.sp,
-                    data$plot.year,
-                    data$Leaf.area..cm.2.,
-                    data.frame(units="area"),
-                    data.frame(id=unique(data$plot.year),
-                               year=data$year[!duplicated(data$plot.year)],
-                               name=data$X.number[!duplicated(data$plot.year)],
-                               lat=NA,
-                               long=NA,
-                               address=NA,
-                               area="cm2"),
-                    data.frame(species=unique(data$plant.sp), taxonomy="Plantae")))
-}
-
 .albouy.2015 <- function(...) {
     temp <- tempfile()
     download.file("http://esapubs.org/archive/ecol/E096/203/Presence_absence_data.zip", temp)
@@ -1042,21 +946,14 @@ if(FALSE){
 
 }
 
-.helmus.2013 <- function(...){
-    library(pez) # This isn't how we declare packages in 'real'
-                 # packages for the time being this is sufficient
-    data(laja)
-    return(.matrix.melt(invert.sites))
-}
-
 .chamailleJammes.2016 <- function(...){
     data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1), stringsAsFactors=FALSE)
     year <- (1992:2005)[-6] # Study excluded the year of 1997
     data <- aggregate(. ~ WATERHOLE, data = data, FUN=sum)
     species <- colnames(data)
     data <- reshape(data, varying = list(names(data)[2:ncol(data)]), v.names = "Count",
-                      idvar = "WATERHOLE", times = c("ELEPHANT", "GIRAFFE", "IMPALA","KUDU",
-                      "ROAN", "SABLE", "WILDEBEEST", "ZEBRA"), timevar = "species", direction = "long")
+                    idvar = "WATERHOLE", times = c("ELEPHANT", "GIRAFFE", "IMPALA","KUDU",
+                                                   "ROAN", "SABLE", "WILDEBEEST", "ZEBRA"), timevar = "species", direction = "long")
     rownames(data) <- NULL
     id <- unique(data$WATERHOLE)
     year <- rep(year, each=length(id))
@@ -1081,72 +978,6 @@ if(FALSE){
     rownames(data) <- species
     return(.matrix.melt(data))
 }
-
-.stapp.2013 <- function(...) {
-    infile  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sgs/137/17/c4cc7f18abefa0d98a356c6936710ab1"
-    infile <- sub("^https","http",infile)
-    data <-read.csv(infile, header=F, skip=1, sep="\t",
-                    col.names=c("Sample", "Session", "Veg", "Day", "Month",
-                                "Year", "Web", "Night", "Trap", "Capt", "Tag",
-                                "Spp", "Age", "Sex", "Reprod", "WT", "notes",
-                                "Stapp's.comments"), check.names=TRUE)
-}
-
-# - this one is a dump, but seeing as how it works(ish) I'm just popping it up...
-}
-if(FALSE){
-.fia.2018 <- function(...){
-    .get.fia <- function(state, var, select){
-        t.zip <- tempfile()
-        download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
-        unzip(t.zip)
-        data <- fread(paste0(state,"_",var,".csv"), select=select)
-        unlink(paste0(state,"_",var,".csv"))
-        return(data)
-    }
-
-    states <- c("PR","VI")#c("AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY", "AS","GU","MP","PW","PR","VI")
-    data <- vector("list", length(states))
-
-    for(i in seq_along(states)){
-        #Download/read in data
-        tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
-        cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
-        plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
-
-        #Subset everything, remove sites with multiple/ambiguous codings, merge
-        tree <- tree[tree$DIA > 1.96,]
-        cond <- cond[cond$PLT_CN %in% names(Filter(function(x) x==1, table(cond$PLT_CN))),]
-        data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
-        data[[i]]$state <- states[i]
-    }
-    data <- rbindlist(data)
-    t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
-    data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
-}
-}
-
-if(FALSE){
-
-    .lamotte.1936 <- function(...){
-    species <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
-    .df.melt(species,
-                     rep("49_Camp_NV_-15750000", length(species)),
-                     rep(1,length(species)),
-                     data.frame(units="p/a", treatment="paleoecology"),
-                     data.frame(id="49_Camp_NV_-15750000", year=-15750000, name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"),
-                     data.frame(species=species,taxonomy=NA))
-
-    }
-}
-
-if(FALSE)
-.kuhlman.2017 <- function(...){
-    #Missoula County, Montana, USA
-    #count them up, all fine
-    #point out it's a species list, essentially
-}
-
 
 .martins.2018 <- function(...){
     data <- read.csv(.unzip("bee_community.csv", suppdata("10.5061/dryad.841vq48", "Martins_et_al_2018_data_files.zip")))
@@ -1178,7 +1009,7 @@ petermann.2016 <- function(...){
 }
 
 
-
+#' @importFrom picante matrix2sample
 .matos.2017 <- function(...){
     usa <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"))[,-1])
     eu <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 2)[,-1])
@@ -1221,236 +1052,238 @@ petermann.2016 <- function(...){
 }
 
 .mcmahon.2017 <- function(...){
-  abun <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=da11cbc268d91fef78c78bd2813adbf6", header = TRUE)
-  site_meta1 <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=a508f609c7d45f1c10604a4722acfd04", header = TRUE)
-  site_meta2 <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=d35b86dbfcf7bf6eab90a2fd5539809c", header = TRUE)
-  org_meta <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=5c558e387eadadf707a3f84742b0d3e1", header = TRUE)
-  colnames(abun)[1] <- "OTU"
-  data_meta1 <- merge(abun, site_meta1, by = "Sample_Name")
-  site_data <- merge(data_meta1, site_meta2, by = "Sample_Name")
+    abun <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=da11cbc268d91fef78c78bd2813adbf6", header = TRUE)
+    site_meta1 <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=a508f609c7d45f1c10604a4722acfd04", header = TRUE)
+    site_meta2 <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=d35b86dbfcf7bf6eab90a2fd5539809c", header = TRUE)
+    org_meta <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=5c558e387eadadf707a3f84742b0d3e1", header = TRUE)
+    colnames(abun)[1] <- "OTU"
+    data_meta1 <- merge(abun, site_meta1, by = "Sample_Name")
+    site_data <- merge(data_meta1, site_meta2, by = "Sample_Name")
 
-  data <- merge(org_meta, site_data, by = "OTU")
-  comm <- with(data, tapply(value, list(paste(Lake,Collection_Date,sep="_", OTU), length)))
-  site.names <- sapply(strsplit(rownames(comm), "_"), function(x) x[1])
-  years <- sapply(strsplit(rownames(comm), "_"), function(x) x[2])
-  comm[is.na(comm)] <- 0
-  unique <- data[!duplicated(data$OTU),]
-  colnames(unique)[1] <- 'Species'
-  unique <- unique[,-9:-20]
-  return(.matrix.melt(comm,
-                      data.frame(units="p/a"),
-                      data.frame(id=rownames(comm),years,site.names,lat=NA,long=NA,address="North of Minocqua, Wisconsin USA",area="Depth"),
-                      data.frame(species=colnames(comm),taxonomy=unique, )))
+    data <- merge(org_meta, site_data, by = "OTU")
+    comm <- with(data, tapply(value, list(paste(Lake,Collection_Date,sep="_", OTU), length)))
+    site.names <- sapply(strsplit(rownames(comm), "_"), function(x) x[1])
+    years <- sapply(strsplit(rownames(comm), "_"), function(x) x[2])
+    comm[is.na(comm)] <- 0
+    unique <- data[!duplicated(data$OTU),]
+    colnames(unique)[1] <- 'Species'
+    unique <- unique[,-9:-20]
+    return(.matrix.melt(comm,
+                        data.frame(units="p/a"),
+                        data.frame(id=rownames(comm),years,site.names,lat=NA,long=NA,address="North of Minocqua, Wisconsin USA",area="Depth"),
+                        data.frame(species=colnames(comm),taxonomy=unique, )))
 }
 
 .hollibaugh.2017 <- function(...){
-  data <- read.csv(file = "https://pasta.lternet.edu/package/data/eml/knb-lter-pal/114/2/3ab81d869107c4b3a7f0fb76fed55ed4", header = TRUE)
+    data <- read.csv(file = "https://pasta.lternet.edu/package/data/eml/knb-lter-pal/114/2/3ab81d869107c4b3a7f0fb76fed55ed4", header = TRUE)
+    names(data)[7:8] <- c("latitude","longitude")
 
-  taxon <- rep(c("Eub","AOB","Archaea","Cren","AOA", "AOB","Eub","AOB","Archaea","Cren","AOA","AOB"), nrow(data))
-  data$id <- paste(data$Station,data$Datetime.GMT)
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-      data.frame(id=id, year=Datetime.GMT, name=Station, lat=Latitude..º., long=Longitude..º., address=NA, area=NA)
-    )
-  site <- rep(paste(data$Station,data$Datetime.GMT), 12)
-  abundance <- unname(unlist(data[,10:21]))
+    taxon <- rep(c("Eub","AOB","Archaea","Cren","AOA", "AOB","Eub","AOB","Archaea","Cren","AOA","AOB"), nrow(data))
+    data$id <- paste(data$Station,data$Datetime.GMT)
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=Datetime.GMT, name=Station, lat=latitude, long=longitude, address=NA, area=NA)
+                          )
+    site <- rep(paste(data$Station,data$Datetime.GMT), 12)
+    abundance <- unname(unlist(data[,10:21]))
 
-  return(.df.melt(taxon, site , abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(taxon), taxonomy=NA)))
+    return(.df.melt(taxon, site , abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(taxon), taxonomy=NA)))
 }
 
 .mcknight.year <- function(...){
-  data <- read.csv(file="https://pasta.lternet.edu/package/data/eml/knb-lter-mcm/12/3/7f8537c0f0f80a255551ad61d9d512dc",header=TRUE)
+    data <- read.csv(file="https://pasta.lternet.edu/package/data/eml/knb-lter-mcm/12/3/7f8537c0f0f80a255551ad61d9d512dc",header=TRUE)
 
-  species <- unique(data$Species)
-  data$id <- rep(paste(data$Location,data$Date))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id, year=Date, name=Location, lat=NA,long=NA, address="antarctica",area=NA)
-  )
-  site <- rep(paste(data$Location,data$Date), 27)
-  abundance <- as.vector(data[,10])
-  abundance[is.na(abundance)] <- 0
+    species <- unique(data$Species)
+    data$id <- rep(paste(data$Location,data$Date))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=Date, name=Location, lat=NA,long=NA, address="antarctica",area=NA)
+                          )
+    site <- rep(paste(data$Location,data$Date), 27)
+    abundance <- as.vector(data[,10])
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site, abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)
-  ))
+    return(.df.melt(species, site, abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
 
 .nps.1998 <- function(...){
-  temp <- tempfile()
-  download.file("https://irma.nps.gov/DataStore/DownloadFile/567456", temp)
-  data <- read.xls(temp, as.is=TRUE)
+    temp <- tempfile()
+    download.file("https://irma.nps.gov/DataStore/DownloadFile/567456", temp)
+    data <- read.xls(temp, as.is=TRUE)
 
-  species <- data$Local.Taxon.Name
-  data$id <- data$Plot_Event
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id,
-      year=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[2]),
-      name=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[1]),
-      lat=NA, long=NA, address=NA,area=NA)
-  )
-  site <- rep(data$Plot_Event, 1091)
-  abundance <- as.vector(data[,11])
-  abundance[is.na(abundance)] <- 0
+    species <- data$Local.Taxon.Name
+    data$id <- data$Plot_Event
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id,
+                                     year=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[2]),
+                                     name=sapply(strsplit(site.metadata$Plot_Event, "."), function(x) x[1]),
+                                     lat=NA, long=NA, address=NA,area=NA)
+                          )
+    site <- rep(data$Plot_Event, 1091)
+    abundance <- as.vector(data[,11])
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site, abundance,
-    study.metadata=data.frame(units="%"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)
-  ))
+    return(.df.melt(species, site, abundance,
+                    study.metadata=data.frame(units="%"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
 
 .ylanne.2018 <- function(...){
-  data <- read.xls(suppdata("10.5061/dryad.bb49h", "Ylanne_etal_2017_FunctEcol_data.xlsx"), skip=1, sheet=3)
+    data <- read.xls(suppdata("10.5061/dryad.bb49h", "Ylanne_etal_2017_FunctEcol_data.xlsx"), skip=1, sheet=3)
 
-  species <- rep(names(data)[9:82], each=nrow(data))
-  year <- '2014'
-  data$id <- rep(paste(data$Plot,data$year))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-      data.frame(id=id, year=year, name=Plot, lat=NA,long=NA, address=NA,area=Area)
-  )
-  site <- rep(paste(data$Plot,data$Year), 74)
-  abundance <- unname(unlist(data[,9:82]))
-  abundance[is.na(abundance)] <- 0
+    species <- rep(names(data)[9:82], each=nrow(data))
+    year <- '2014'
+    data$id <- rep(paste(data$Plot,data$year))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=year, name=Plot, lat=NA,long=NA, address=NA,area=Area)
+                          )
+    site <- rep(paste(data$Plot,data$Year), 74)
+    abundance <- unname(unlist(data[,9:82]))
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site , abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)))
+    return(.df.melt(species, site , abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)))
 }
 
 .ross.2014 <- function(...){
-  data <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.3136.5&entityid=88e40dc185bd3f00e7464398b61f40fc", header = TRUE)
+    data <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.3136.5&entityid=88e40dc185bd3f00e7464398b61f40fc", header = TRUE)
 
-  species <- data$SCI_NAME
-  data$id <- rep(paste(data$BIOGEOGRAPHY,data$DATE))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id, year=DATE, name=BIOGEOGRAPHY, lat=NA,long=NA, address=NA,area=NA)
-  )
-  site <- rep(paste(data$BIOGEOGRAPHY,data$DATE), 856)
-  abundance <- as.vector(data$INDIVIDUALS)
-  abundance[is.na(abundance)] <- 0
+    species <- data$SCI_NAME
+    data$id <- rep(paste(data$BIOGEOGRAPHY,data$DATE))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=DATE, name=BIOGEOGRAPHY, lat=NA,long=NA, address=NA,area=NA)
+                          )
+    site <- rep(paste(data$BIOGEOGRAPHY,data$DATE), 856)
+    abundance <- as.vector(data$INDIVIDUALS)
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site, abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)
-  ))
+    return(.df.melt(species, site, abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
 
 .miller.2013 <- function(...){
-  data<- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.2739.7&entityid=1743caa458ea7bb640833d884576f51c", header = TRUE)
+    data<- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-and.2739.7&entityid=1743caa458ea7bb640833d884576f51c", header = TRUE)
 
-  species <- data$ENTITY
-  data$id <- rep(paste(data$TRAPID,data$YEAR))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id, year=YEAR, name=TRAPID, lat=NA,long=NA, address="Willamette National Forest Oregon USA",area=NA)
-  )
-  site <- rep(paste(data$TRAPID,data$YEAR), 17663)
-  abundance <- as.vector(data$NO_INDIV)
-  abundance[is.na(abundance)] <- 0
+    species <- data$ENTITY
+    data$id <- rep(paste(data$TRAPID,data$YEAR))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=YEAR, name=TRAPID, lat=NA,long=NA, address="Willamette National Forest Oregon USA",area=NA)
+                          )
+    site <- rep(paste(data$TRAPID,data$YEAR), 17663)
+    abundance <- as.vector(data$NO_INDIV)
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site, abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)
-  ))
+    return(.df.melt(species, site, abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
 
 .ellison.2017 <- function(...){
-  data <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-hfr.97.23&entityid=a840ed1f4c891cd7e6abe660aecb797a", header=TRUE)
+    data <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-hfr.97.23&entityid=a840ed1f4c891cd7e6abe660aecb797a", header=TRUE)
 
-  species <- data$species
-  data$id <- rep(paste(data$plot,data$date))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id, year=date, name=plot, lat=NA,long=NA, address="North of West Point, New York, USA",area=NA)
-  )
-  site <- rep(paste(data$plot,data$date), 3120)
-  abundance <- as.vector(data$no.ants)
-  abundance[is.na(abundance)] <- 0
+    species <- data$species
+    data$id <- rep(paste(data$plot,data$date))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=date, name=plot, lat=NA,long=NA, address="North of West Point, New York, USA",area=NA)
+                          )
+    site <- rep(paste(data$plot,data$date), 3120)
+    abundance <- as.vector(data$no.ants)
+    abundance[is.na(abundance)] <- 0
 
-  return(.df.melt(species, site, abundance,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=NA)
-  ))
+    return(.df.melt(species, site, abundance,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
 
 ## Error in data.frame(id = id, year = YEAR, name = Waterbody_Name, lat = lat,  : arguments imply differing number of rows: 7556, 20027, 1
 ## does not yet work
 .rypel.2018 <- function(...){
-  abun <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=829ef0e4eea5e6392b19e595aa775832",header=TRUE)
-  taxon_inf <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=490295acdaf716c90b58a5a089ab9847",header=TRUE)
-  location <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=3c23c7e39d30f047fe6b229d85df2a88",header=TRUE)
+    abun <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=829ef0e4eea5e6392b19e595aa775832",header=TRUE)
+    taxon_inf <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=490295acdaf716c90b58a5a089ab9847",header=TRUE)
+    location <- read.csv(file="https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.356.3&entityid=3c23c7e39d30f047fe6b229d85df2a88",header=TRUE)
 
-  abun <- merge(abun, taxon_inf, by = "taxon_id")
-  data <- merge(abun, location, by = "WBIC")
+    abun <- merge(abun, taxon_inf, by = "taxon_id")
+    data <- merge(abun, location, by = "WBIC")
 
-  species <- data$taxon_name
-  lat <- data$Latitude
-  long <- data$Longitude
-  data$id <- rep(paste(data$Waterbody_Name,data$YEAR))
-  site.metadata <- data[!duplicated(data$id),]
-  site.metadata <- with(site.metadata,
-    data.frame(id=id, year=YEAR, name=Waterbody_Name, lat=lat,long=long, address="Wisconsin USA",area=NA)
-  )
-  site <- rep(paste(data$Waterbody_Name,data$Year), 7556)
-  data$site.id <- paste(data$Waterbody_Name,data$Year)
-  comm <- with(data, tapply(N, list(site.id, taxon_name), sum))
-  comm[is.na(comm)] <- 0
+    species <- data$taxon_name
+    lat <- data$Latitude
+    long <- data$Longitude
+    data$id <- rep(paste(data$Waterbody_Name,data$YEAR))
+    site.metadata <- data[!duplicated(data$id),]
+    site.metadata <- with(site.metadata,
+                          data.frame(id=id, year=YEAR, name=Waterbody_Name, lat=lat,long=long, address="Wisconsin USA",area=NA)
+                          )
+    site <- rep(paste(data$Waterbody_Name,data$Year), 7556)
+    data$site.id <- paste(data$Waterbody_Name,data$Year)
+    comm <- with(data, tapply(N, list(site.id, taxon_name), sum))
+    comm[is.na(comm)] <- 0
 
-  return(.df.melt(species, site, comm,
-    study.metadata=data.frame(units="#"),
-    site.metadata,
-    species.metadata=data.frame(species=unique(species), taxonomy=taxon_id)
-  ))
+    return(.df.melt(species, site, comm,
+                    study.metadata=data.frame(units="#"),
+                    site.metadata,
+                    species.metadata=data.frame(species=unique(species), taxonomy=NA)
+                    ))
 }
-               
+
 .sandau.2017 <- function(...){
-  tmp.file <- tempfile()
-  download.file("https://www.datadryad.org/bitstream/handle/10255/dryad.129944/BB_all_4_SimilMatrices_Dryad.xlsx?sequence=1", tmp.file)
-  data <- read.xls(tmp.file, sheet=2)
-  lookup <- read.xls(suppdata("10.5061/dryad.44bm6", "BB_all_4_SimilMatrices_Dryad.xlsx"), sheet=1, skip=5, header=FALSE, as.is=TRUE)[-1:-8,]
-  lookup[,2] <- sanitize_text(lookup[,2])  
-  lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
-  lookup <- setNames(lookup[,2], lookup[,1])
-  names(data)[names(data) %in% names(lookup)] <- lookup[names(data)[names(data) %in% names(lookup)]]
-  site_year <- with(data, paste(data$PlotID, Year, sep="_"))
-  data <- cbind(site_year, data)
-  comm.mat <-data[-1:-11]
-  #This sets the row names to the unique plot_year identifier
-  rownames(comm.mat) <-data[,1]
-  site.metadata <- data[!duplicated(data$site_year),]
-  return(.matrix.melt(comm.mat,
-                      data.frame(units="%", treatment=""),
-                      data.frame(id=site.metadata$site_year, name=site.metadata$PlotID, year=site.metadata$Year, lat=NA, long=NA, address="Grandcour", treatment=site.metadata$Treat, area="20 × 20 m"),
-                      data.frame(species=unique(lookup, taxonomy="Plantae"))))
+    tmp.file <- tempfile()
+    download.file("https://www.datadryad.org/bitstream/handle/10255/dryad.129944/BB_all_4_SimilMatrices_Dryad.xlsx?sequence=1", tmp.file)
+    data <- read.xls(tmp.file, sheet=2)
+    lookup <- read.xls(suppdata("10.5061/dryad.44bm6", "BB_all_4_SimilMatrices_Dryad.xlsx"), sheet=1, skip=5, header=FALSE, as.is=TRUE)[-1:-8,]
+    lookup[,2] <- sanitize_text(lookup[,2])  
+    lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
+    lookup <- setNames(lookup[,2], lookup[,1])
+    names(data)[names(data) %in% names(lookup)] <- lookup[names(data)[names(data) %in% names(lookup)]]
+    site_year <- with(data, paste(data$PlotID, Year, sep="_"))
+    data <- cbind(site_year, data)
+    comm.mat <-data[-1:-11]
+    #This sets the row names to the unique plot_year identifier
+    rownames(comm.mat) <-data[,1]
+    site.metadata <- data[!duplicated(data$site_year),]
+    return(.matrix.melt(comm.mat,
+                        data.frame(units="%", treatment=""),
+                        data.frame(id=site.metadata$site_year, name=site.metadata$PlotID, year=site.metadata$Year, lat=NA, long=NA, address="Grandcour", treatment=site.metadata$Treat, area="20 x 20 m"),
+                        data.frame(species=unique(lookup, taxonomy="Plantae"))))
 }
-                       
+
 .kormann.2018 <- function(...){
-  data <- read.table(.unzip("Data/PointCounts.txt",suppdata("10.5061/dryad.0t9d3/1", "Data.zip")), header=TRUE)
-  site_pc <- with(data, paste(data$Site, PC, sep="_"))
-  rownames(data) <- site_pc
-  comm.mat <- as.matrix(data[-1:-13])
-  site.metadata <- data[,1:13]
-  species.meta <- data.frame(species=colnames(comm.mat), taxonomy="Aves")
-  return(.matrix.melt(comm.mat,
-                      data.frame(units="#"),
-                      data.frame(id=site_pc, name=site.metadata$Site, year=2011, lat=site.metadata$X, long=site.metadata$Y, address="Southern Costa Rica, around the Las Cruces Biological Station ", area=site.metadata$Area),
-                      species.meta))
-  
-  
-  .brant.2018 <- function(...){
+    data <- read.table(.unzip("Data/PointCounts.txt",suppdata("10.5061/dryad.0t9d3/1", "Data.zip")), header=TRUE)
+    site_pc <- with(data, paste(data$Site, PC, sep="_"))
+    rownames(data) <- site_pc
+    comm.mat <- as.matrix(data[-1:-13])
+    site.metadata <- data[,1:13]
+    species.meta <- data.frame(species=colnames(comm.mat), taxonomy="Aves")
+    return(.matrix.melt(comm.mat,
+                        data.frame(units="#"),
+                        data.frame(id=site_pc, name=site.metadata$Site, year=2011, lat=site.metadata$X, long=site.metadata$Y, address="Southern Costa Rica, around the Las Cruces Biological Station ", area=site.metadata$Area),
+                        species.meta))
+}
+
+
+.brant.2018 <- function(...){
     tmp.file <- tempfile()
     download.file("https://zenodo.org/record/1198846/files/template_MosquitoDataBrant77.xlsx", tmp.file)
     DailyHLC <- read.xls(tmp.file, sheet=4, as.is=TRUE, skip=9)
@@ -1471,150 +1304,115 @@ petermann.2016 <- function(...){
                         data.frame(units="#"),
                         data.frame(id=DailyHLC$site_year, name=site.metadata$Location, year=site.metadata$Date, lat="4.6353 to 4.9654", long="116.9542 to 117.8004", address="SAFE project, Borneo", area="attracted to humans"),
                         species.meta))
-  }
+}
 
 .truxa.2015 <- function(...){
-  data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
-  comm <- data[,-1:-3] #get rid of columns you don't want
-  rownames(comm) <- data$Species #name the rows what you want
-  comm <- t(comm) #t=transpose, flip the rows and columns
-  return(.matrix.melt(comm, 
-                      data.frame(units="#"),
-                      data.frame(id=rownames(comm),year="2006-2008",
-                                 name=c("Danube non-flooded", "Danude flooded", "Leitha non-flooded", "Leitha flooded", "Morava non-flooded", "Morava flooded"),
-                                 lat=c("16°41'24", "16°42'20", "16°51'32", "16°53'26", "16°53'22"),
-                                 long=c("48°08'41", "48°07'53", "48°00'19", "48°03'28", "48°17'00", "48°17'96"),
-                                 address="Eastern Austria",area="na"), 
-                      data.frame(species=colnames(comm),taxonomy="Lepidoptera")))
+    data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
+    comm <- data[,-1:-3] #get rid of columns you don't want
+    rownames(comm) <- data$Species #name the rows what you want
+    comm <- t(comm) #t=transpose, flip the rows and columns
+    return(.matrix.melt(comm, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(comm),year="2006-2008",
+                                   name=c("Danube non-flooded", "Danude flooded", "Leitha non-flooded", "Leitha flooded", "Morava non-flooded", "Morava flooded"),
+                                   lat=c("16\u00BA41'24", "16\u00BA42'20", "16\u00BA51'32", "16\u00BA53'26", "16\u00BA53'22"),
+                                   long=c("48\u00BA08'41", "48\u00BA07'53", "48\u00BA00'19", "48\u00BA03'28", "48\u00BA17'00", "48\u00BA17'96"),
+                                   address="Eastern Austria",area="na"), 
+                        data.frame(species=colnames(comm),taxonomy="Lepidoptera")))
 }
 .johnson.2017 <- function(...){
-  datam<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145772/Species_x_SiteMatrix.csv?sequence=1", as.is=TRUE)
-  sitedataA<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.148018/RawSoilData.csv?sequence=1",as.is = TRUE)
-  sitedataB<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145776/VacantLot_DemolitionDate.csv?sequence=1",as.is = TRUE)
-  sppdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145777/Species_x_TraitsMatrix.csv?sequence=1",as.is = TRUE)
-  
-  comm<-datam[,-(1:2)]
-  
-  sitedataB <- rbind(sitedataB, sitedataB)
-  sitedataB$new.code <- paste(sitedataB$Code, rep(c("BF","RG"), each=nrow(sitedataB)/2), sep=".")
-  sitedataA$new.code <- paste(sitedataA$LotID, rep(c("BF","RG"), each=nrow(sitedataA)/2), sep=".")
-  
-  sitedata<-merge(sitedataA,sitedataB,by="new.code",all.x=TRUE,all.y = TRUE)
-  names(sitedata)[c(1,27)] <- c("id","address")
-  sitedata$lat <- NA;sitedata$long <-NA; sitedata$area <- NA
-  sitedata$year <- "2012-2013"
-  sitedata$name <- sitedata$id
-  names(sppdata)[1:2] <- c("species","taxonomy")
-  
-  return(.matrix.melt(comm,
-                data.frame(units="percent"),
-                sitedata,
-                sppdata)
-  )
+    datam<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145772/Species_x_SiteMatrix.csv?sequence=1", as.is=TRUE)
+    sitedataA<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.148018/RawSoilData.csv?sequence=1",as.is = TRUE)
+    sitedataB<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145776/VacantLot_DemolitionDate.csv?sequence=1",as.is = TRUE)
+    sppdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.145777/Species_x_TraitsMatrix.csv?sequence=1",as.is = TRUE)
+    
+    comm<-datam[,-(1:2)]
+    
+    sitedataB <- rbind(sitedataB, sitedataB)
+    sitedataB$new.code <- paste(sitedataB$Code, rep(c("BF","RG"), each=nrow(sitedataB)/2), sep=".")
+    sitedataA$new.code <- paste(sitedataA$LotID, rep(c("BF","RG"), each=nrow(sitedataA)/2), sep=".")
+    
+    sitedata<-merge(sitedataA,sitedataB,by="new.code",all.x=TRUE,all.y = TRUE)
+    names(sitedata)[c(1,27)] <- c("id","address")
+    sitedata$lat <- NA;sitedata$long <-NA; sitedata$area <- NA
+    sitedata$year <- "2012-2013"
+    sitedata$name <- sitedata$id
+    names(sppdata)[1:2] <- c("species","taxonomy")
+    
+    return(.matrix.melt(comm,
+                        data.frame(units="percent"),
+                        sitedata,
+                        sppdata)
+           )
 }
 
 .harrower.2017<-function(...){
-  
-  birddata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159186/bird_data.csv?sequence=1",as.is = TRUE)
-  envdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159187/envr_data.csv?sequence=1",as.is=TRUE)
-  
-  envdata$name<-paste(envdata$block,envdata$transect,sep="_")
-  
-  birddata$id<-paste(birddata$block,birddata$transect,birddata$year,sep="_")
-  birddata$name<-paste(birddata$block,birddata$transect,sep="_")
-  birddata$lat<-"50o39'59" N" 
-  birddata$long<-"120o19'09" W" 
-  birddata$address<- "Lac du Bois Provincial Park near Kamloops, British Columbia, Canada"
-  birddata$area<-"20ha"
-  birddata$binom<-paste(birddata$genus,birddata$species,sep=".")
-  
-  comm <- with(birddata, tapply(binom, list(binom, site), length))
-  comm[is.na(comm)] <- 0
-  comm<-t(comm)
-  
-  birdsub<-birddata[!duplicated(birddata$site),]
-  envsub<-envdata[,c(3,8)]
-  envtest<-merge(birdsub,envsub,by="name")
-  envtest<-envtest[,-c(6:11,17)]
-  
-  return(.matrix.melt(comm,
-                      data.frame(units="#"),
-                      envtest,
-                      data.frame(species=birddata$binom, taxonomy=NA)
-                      )
-         )
+    
+    birddata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159186/bird_data.csv?sequence=1",as.is = TRUE)
+    envdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.159187/envr_data.csv?sequence=1",as.is=TRUE)
+    
+    envdata$name<-paste(envdata$block,envdata$transect,sep="_")
+    
+    birddata$id<-paste(birddata$block,birddata$transect,birddata$year,sep="_")
+    birddata$name<-paste(birddata$block,birddata$transect,sep="_")
+    birddata$lat<-"50o39'59\" N" 
+    birddata$long<-"120o19'09\" W" 
+    birddata$address<- "Lac du Bois Provincial Park near Kamloops, British Columbia, Canada"
+    birddata$area<-"20ha"
+    birddata$binom<-paste(birddata$genus,birddata$species,sep=".")
+    
+    comm <- with(birddata, tapply(binom, list(binom, site), length))
+    comm[is.na(comm)] <- 0
+    comm<-t(comm)
+    
+    birdsub<-birddata[!duplicated(birddata$site),]
+    envsub<-envdata[,c(3,8)]
+    envtest<-merge(birdsub,envsub,by="name")
+    envtest<-envtest[,-c(6:11,17)]
+    
+    return(.matrix.melt(comm,
+                        data.frame(units="#"),
+                        envtest,
+                        data.frame(species=birddata$binom, taxonomy=NA)
+                        )
+           )
 }
 
 .lorite.2017<-function(...){
-  expdata<-read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", nrows=410)
-  lookup <- read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", skip=414, nrows=34,as.is = TRUE,header = FALSE)
-  lookup<-lookup[,1:2]
-  expdata$new.site<-paste(expdata$Site,expdata$transect,expdata$quadrat,sep="_")
-  names(expdata)[7:40]<-lookup[,2]
-  
-  comm<-cbind(id=expdata[,41],expdata[,7:40])
-  
-  #needs meta data, loc: scattered through paper/tables but existant.
-  
-  return(.matrix.melt(comm,
-                      data.frame(units="percent"),
-                      data.frame(id=comm$id,year=NA),
-                      data.frame(species=lookup[,2],taxonomy=NA)
+    expdata<-read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", nrows=410)
+    lookup <- read.delim("https://doi.org/10.1371/journal.pone.0182414.s003", skip=414, nrows=34,as.is = TRUE,header = FALSE)
+    lookup<-lookup[,1:2]
+    expdata$new.site<-paste(expdata$Site,expdata$transect,expdata$quadrat,sep="_")
+    names(expdata)[7:40]<-lookup[,2]
     
-  ))
-}
-
-
-.osuri.2016<-function(...){
-  expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.109139/Osuri_Sanakran_2016_JAE_plot_data.csv?sequence=2",as.is = TRUE)
-
-  comm <- with(expdata, tapply(species, list(species, site.name), length))
-  comm[is.na(comm)] <- 0
-  comm<-t(comm)
-  
-  #meta data is limited, what could be easily found is in the expdata  data frame
-  
-  return(.matrix.melt(comm,
-                      data.frame(units="#"),
-                      sitedata,
-                      data.frame(species=expdata$species,taxonomy=NA)
-                      )
-         )
-}
-
-.drew.2015<-function(...){
-  expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.93108/Supplemental%201.csv?sequence=1",as.is = TRUE)
-  expdata$binom<-paste(expdata$Genus,expdata$species,sep=".")
-  
-  comm<-t(expdata[,4:6])
-  colnames(comm)<-expdata$binom
-  
-  #meta data is basically not a thing, so this may need to be scrapped after all
-  
-  return(.matrix.melt(comm,
-                      data.frame(units="p/a"),
-                      sitedata,
-                      data.frane(speccies=expdata$binom,taxonomy=NA)
-                      )
-         )
+    comm<-cbind(id=expdata[,41],expdata[,7:40])
+    
+    #needs meta data, loc: scattered through paper/tables but existant.
+    
+    return(.matrix.melt(comm,
+                        data.frame(units="percent"),
+                        data.frame(id=comm$id,year=NA),
+                        data.frame(species=lookup[,2],taxonomy=NA)
+                        
+                        ))
 }
 
 .oswald.2015 <- function(...){
-  data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.56p0f", "Oswald_et_al_2015_dryad.56p0f.xlsx"))) 
-  comm <- data[,-13]
-  comm <- comm[,-2:-10]
-  names(comm) <- c("Locality", "Species", "Numbers")
-  comm$Numbers <- as.numeric(comm$Numbers)
-  comm <- with(comm, tapply(Numbers, list(Locality, Species), sum))
-  comm[is.na(comm)] <- 0
-  return(.matrix.melt(comm, 
-                      data.frame(units="#"),
-                      data.frame(id=rownames(comm),year="2009-2011",
-                                 name=data$Locality,
-                                 lat=with(data, tapply(Latitude.Decimal.Degrees, Locality, mean)),
-                                 long=with(data, tapply(Longitude.Decimal.Degrees, Locality, mean)),
-                                 address="Northwestern Peru, Tumbes, Marañón Valley",area="na"), 
-                      data.frame(species=colnames(comm),taxonomy="Aves")))
+    data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.56p0f", "Oswald_et_al_2015_dryad.56p0f.xlsx"))) 
+    comm <- data[,-13]
+    comm <- comm[,-2:-10]
+    names(comm) <- c("Locality", "Species", "Numbers")
+    comm$Numbers <- as.numeric(comm$Numbers)
+    comm <- with(comm, tapply(Numbers, list(Locality, Species), sum))
+    comm[is.na(comm)] <- 0
+    return(.matrix.melt(comm, 
+                        data.frame(units="#"),
+                        data.frame(id=rownames(comm),year="2009-2011",
+                                   name=data$Locality,
+                                   lat=with(data, tapply(Latitude.Decimal.Degrees, Locality, mean)),
+                                   long=with(data, tapply(Longitude.Decimal.Degrees, Locality, mean)),
+                                   address="Northwestern Peru, Tumbes, Mara\u00F1\u00F3n Valley",area="na"), 
+                        data.frame(species=colnames(comm),taxonomy="Aves")))
 }
 
 ##########
@@ -1623,317 +1421,516 @@ petermann.2016 <- function(...){
 
 # this function downloads tree data
 .wang.2017.a <- function(...){
-	tmp <- tempfile()
-	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
-	tree_data <- read.xls(tmp, 1) 
-	tree_data <- tree_data[!is.na(tree_data$diameter.at.breast.height..cm.),]
-	plot_ids <- tree_data$Plot.number
-	# lat/long data
-	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
-	ll_data <- read.csv(tmp, sep = ";")
-	names(ll_data) <- c("forest_type", "id", "lat", "long")
-	ll_data$year <- 2017; ll_data$name <- ll_data$id
-	ll_data$forest_type <- NULL
-	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
-	return(.df.melt(tree_data$species_name,
-			plot_ids,
-			tree_data$diameter.at.breast.height..cm.,
-			data.frame(units = "dbh"),
-			ll_data,
-        		data.frame(species= unique(tree_data$species_name), taxonomy="Plantae")
-))
+    tmp <- tempfile()
+    download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+    tree_data <- read.xls(tmp, 1) 
+    tree_data <- tree_data[!is.na(tree_data$diameter.at.breast.height..cm.),]
+    plot_ids <- tree_data$Plot.number
+    # lat/long data
+    download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+    ll_data <- read.csv(tmp, sep = ";")
+    names(ll_data) <- c("forest_type", "id", "lat", "long")
+    ll_data$year <- 2017; ll_data$name <- ll_data$id
+    ll_data$forest_type <- NULL
+    ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "25m*25m"
+    return(.df.melt(tree_data$species_name,
+                    plot_ids,
+                    tree_data$diameter.at.breast.height..cm.,
+                    data.frame(units = "dbh"),
+                    ll_data,
+                    data.frame(species= unique(tree_data$species_name), taxonomy="Plantae")
+                    ))
 }
 
 # this function downloads shrub data
 .wang.2017.b <- function(...){
-	tmp <- tempfile()
-	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
-	shrub_data <- read.xls(tmp, 2)
-	shrub_data <- shrub_data[!is.na(shrub_data$coverage),]
-	plot_ids <- shrub_data$Plot.number
-	plot_ids <- gsub("-S[0-9]+", "", plot_ids)
-	# lat/long data
-	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
-	ll_data <- read.csv(tmp, sep = ";")
-	names(ll_data) <- c("forest_type", "id", "lat", "long")
-	ll_data$year <- 2017; ll_data$name <- ll_data$id
-	ll_data$forest_type <- NULL
-	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "5m*5m"
-	ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
-	return(.df.melt(shrub_data$species_name,
-			plot_ids,
-			shrub_data$coverage,
-			data.frame(units = "%"),
-			ll_data,
-			data.frame(species = unique(shrub_data$species_name), taxonomy = "Plantae")
-	      )
-	)
+    tmp <- tempfile()
+    download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+    shrub_data <- read.xls(tmp, 2)
+    shrub_data <- shrub_data[!is.na(shrub_data$coverage),]
+    plot_ids <- shrub_data$Plot.number
+    plot_ids <- gsub("-S[0-9]+", "", plot_ids)
+    # lat/long data
+    download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+    ll_data <- read.csv(tmp, sep = ";")
+    names(ll_data) <- c("forest_type", "id", "lat", "long")
+    ll_data$year <- 2017; ll_data$name <- ll_data$id
+    ll_data$forest_type <- NULL
+    ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "5m*5m"
+    ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
+    return(.df.melt(shrub_data$species_name,
+                    plot_ids,
+                    shrub_data$coverage,
+                    data.frame(units = "%"),
+                    ll_data,
+                    data.frame(species = unique(shrub_data$species_name), taxonomy = "Plantae")
+                    )
+           )
 }
 
 # this function downloads herb data
 .wang.2017.c <- function(...){
-	tmp <- tempfile()
-	download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
-	herb_data <- read.xls(tmp, 3)
-	herb_data <- herb_data[!is.na(herb_data$coverage),]
-	plot_ids <- herb_data$Plot.number
-	plot_ids <- gsub("-H[0-9]+", "", plot_ids)
-	# lat/long data
-	download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
-	ll_data <- read.csv(tmp, sep = ";")
-	names(ll_data) <- c("forest_type", "id", "lat", "long")
-	ll_data$year <- 2017; ll_data$name <- ll_data$id
-	ll_data$forest_type <- NULL
-	ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "1m*1m"
-	ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
-	ll_data <- ll_data[ll_data$id!="14",]
-	return(.df.melt(herb_data$species_name,
-			plot_ids,
-			herb_data$coverage,
-			data.frame(units = "%"),
-			ll_data,
-		        data.frame(species = unique(herb_data$species_name), taxonomy = "Plantae")
-      		)
-	)
+    tmp <- tempfile()
+    download.file("https://bdj.pensoft.net/article/download/suppl/3909480/", tmp)
+    herb_data <- read.xls(tmp, 3)
+    herb_data <- herb_data[!is.na(herb_data$coverage),]
+    plot_ids <- herb_data$Plot.number
+    plot_ids <- gsub("-H[0-9]+", "", plot_ids)
+    # lat/long data
+    download.file("https://bdj.pensoft.net/article/22167/download/csv/3909467/", tmp)
+    ll_data <- read.csv(tmp, sep = ";")
+    names(ll_data) <- c("forest_type", "id", "lat", "long")
+    ll_data$year <- 2017; ll_data$name <- ll_data$id
+    ll_data$forest_type <- NULL
+    ll_data$address <- "Liangshui National Natural Reserve"; ll_data$area <- "1m*1m"
+    ll_data$id <- gsub("-T", "", ll_data$id, fixed=TRUE)
+    ll_data <- ll_data[ll_data$id!="14",]
+    return(.df.melt(herb_data$species_name,
+                    plot_ids,
+                    herb_data$coverage,
+                    data.frame(units = "%"),
+                    ll_data,
+                    data.frame(species = unique(herb_data$species_name), taxonomy = "Plantae")
+                    )
+           )
 }
 
 .valtonen.2017 <- function(...){
-  species <- read.xls(suppdata("10.5061/dryad.9m6vp/1", "valtonen_etal_JAE.xlsx"))
-  comm <- as.matrix(species[,-1:-2])
-  rownames(comm) <- paste(species$Site, species$Year)
-  
+    species <- read.xls(suppdata("10.5061/dryad.9m6vp/1", "valtonen_etal_JAE.xlsx"))
+    comm <- as.matrix(species[,-1:-2])
+    rownames(comm) <- paste(species$Site, species$Year)
+    
     return(.matrix.melt(comm,
-                      data.frame(units="#", treatment="light_trap"),
-                      data.frame(id=rownames(comm), year=species$Year, name=species$Site, lat=NA, long=NA, address = paste0(species$Site, ", Hungary"), area="light_trap"),
-                      data.frame(species=colnames(comm), taxonomy=NA)))
+                        data.frame(units="#", treatment="light_trap"),
+                        data.frame(id=rownames(comm), year=species$Year, name=species$Site, lat=NA, long=NA, address = paste0(species$Site, ", Hungary"), area="light_trap"),
+                        data.frame(species=colnames(comm), taxonomy=NA)))
 }  
 
 .boyle.2015 <- function(...){
-  species <- read.csv(suppdata("10.5061/dryad.bf486", "BritishColumbiaHighElevationBirdDataset.csv"))
-  species$SiteCombo <- paste0(species$MountainRange, "-", species$SiteName)
-  comm <- with(species, tapply(NBirds, list(SiteCombo, CommonName), sum))
-  comm[is.na(comm)] <- 0
-  site.metadata <- species[!duplicated(species$SiteCombo),]
-  site.metadata <- site.metadata[,c("Date", "Wind", "Temp", "Cloud", "AM.PM", "HaSurveyed", "SiteCombo")]
-  return(.matrix.melt(comm,
-                      data.frame(units="#", treatment=NA),
-                      data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
-                      data.frame(species=colnames(comm), taxonomy=NA)))
+    species <- read.csv(suppdata("10.5061/dryad.bf486", "BritishColumbiaHighElevationBirdDataset.csv"))
+    species$SiteCombo <- paste0(species$MountainRange, "-", species$SiteName)
+    comm <- with(species, tapply(NBirds, list(SiteCombo, CommonName), sum))
+    comm[is.na(comm)] <- 0
+    site.metadata <- species[!duplicated(species$SiteCombo),]
+    site.metadata <- site.metadata[,c("Date", "Wind", "Temp", "Cloud", "AM.PM", "HaSurveyed", "SiteCombo")]
+    return(.matrix.melt(comm,
+                        data.frame(units="#", treatment=NA),
+                        data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
+                        data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
-.jain.2017 <- function(){
-  species <- read.xls(suppdata("10.5061/dryad.177q4", "Jain_etal_2016_Butterfly%20abundance%20across%20sites_22Dec2016.xlsx"), skip=5, header=TRUE, as.is=TRUE)
-  species.clean <- species[,c(-1:-15,-38)]
-  comm <- t(as.matrix(species.clean))
-  colnames(comm) <- species$Scientific.name
-  return(.matrix.melt(comm,
-                      data.frame(units="#", treatment=NA),
-                      data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
-                      data.frame(species=colnames(comm), taxonomy=NA)))
-}
-  if(FALSE){
-  species <- read.csv(suppdata("10.5061/dryad.bf486", "BritishColumbiaHighElevationBirdDataset.csv"))
-  comm <- as.matrix(species[,-1:-13])
-  comm <- comm[,-2:-4]
-  comm <- comm[,-3:-6]  
-
-}
-
+################################
+# ARGON FUNCTIONS ##############
+# - WORKING BUT NOT DATA RELEASE
+################################
 if(FALSE){
-.tomasovych.2010a <- function(...){
-  species <- read.xls(suppdata("10.5061/dryad.1225", "abundances-S California 1975.xls"), skip=1, header=TRUE)
-  species.clean <- species[,-1]
-  comm <- t(as.matrix(species.clean))
-  rownames(comm) <- species$X
-  rownames(comm)
+    #' @export
+    .branstetter.2018 <- function(...) {
+        data <- read.csv("TableA3.csv")
+        metadata <- read.csv("TableA2.csv")
+        rownames(data) <- data[,1]
+        data[,1] <- NULL
+        colnames(data) <- gsub(".", "-", colnames(data), fixed=TRUE)
+        data <- t(data)
+        rownames(data) <- paste(rownames(data), year, sep="_")
+        metadata$year <- format(as.Date(metadata$datecollected, format="%d-%b-%Y"),"%Y")
+        year <- metadata$year[!duplicated(metadata$site)]
+        name <- unique(metadata$site)
+        lat <- metadata$latitude[!duplicated(metadata$site)]
+        long <- metadata$longitude[!duplicated(metadata$site)]
+        return(.matrix.melt(data,
+                            data.frame(units="#"),
+                            data.frame(id=rownames(data), year, name, lat, long,
+                                       address=NA, area=NA),
+                            data.frame(species=colnames(data), taxonomy="Hymenoptera")))
+    }
+
+    .cobb.2016 <- function(...) {
+        data <- read.xls("COMPLETE Dataset as of 4_recovery2.xlsx")
+        data$name <- with(data, paste("study.area", Study.Area, "site", Site, sep="_"))
+        data$month.year <- with(data, paste(Month, Year, sep="-"))
+        data$site.year <- with(data, paste(name, month.year, sep="_"))
+        metadata <- data[,c(1:11, 148, 149, 150)]
+        metadata$Longitude <- gsub("\342\200\223", "-", metadata$Longitude)
+        data[,1] <- data$site.year
+        data[,c(2:11, 148, 149, 150)] <- NULL
+        data <- aggregate(.~Sample.., data=data, FUN=sum)
+        rownames(data) <- data[,1]
+        data[,1] <- NULL
+        rownames <- rownames(data)
+        data <- apply(data, 2, as.numeric)
+        rownames(data) <- rownames
+        name <- metadata$name[match(rownames(data), metadata$site.year)]
+        year <- metadata$Year[match(rownames(data), metadata$site.year)]
+        lat <- metadata$Latitude[match(rownames(data), metadata$site.year)]
+        long <- metadata$Longitude[match(rownames(data), metadata$site.year)]
+        veg.type <- metadata$Veg.type[match(rownames(data), metadata$site.year)]
+        burned <- metadata$Burn[match(rownames(data), metadata$site.year)]
+        monsoon <- metadata$Monsoon[match(rownames(data), metadata$site.year)]
+        return(.matrix.melt(data,
+                            data.frame(units="STD.#"),
+                            data.frame(id=rownames(data),
+                                       year,
+                                       name,
+                                       lat,
+                                       long,
+                                       address=NA,
+                                       area=NA,
+                                       veg.type,
+                                       burned,
+                                       monsoon),
+                            data.frame(species=colnames(data), taxonomy="Arthropoda")))
+    }
+
+    .mooney.2018 <- function(...) {
+        #will need to loop through and do this for each year (sheet) in the dataset.
+        data <- read.xls("Insect Abundance Population Summaries.xlsx", sheet="#")
+        data <- data[which(data$Response == "Total"),]
+        #remove all rows that contain only NA values
+        data <- data[ ,!apply(data, 2, function(x) all(is.na(x)))]
+        data <- melt(data, id=c("Population", "Response"))
+    }
+
+    .dyer.2017 <- function(...) {
+        # Location is not always GPS coordinates in this dataset. Some are descriptions or titles of the locations.
+        # Some of the values in data are blank. These do not mean that the value is zero but that the data is not complete. (Lee has the code to complete it).
+        data <- read.xls("SWRS_plots_updated_nov_3_2017.xlsx")
+        data<-data[,1:24]
+        data$year <- format(as.Date(data$Date..D.M.Y., format="%Y-%m-%d"),"%Y")
+        data$plot.year <- with(data, paste(X.number, year, sep="."))
+        return(.df.melt(data$plant.sp,
+                        data$plot.year,
+                        data$Leaf.area..cm.2.,
+                        data.frame(units="area"),
+                        data.frame(id=unique(data$plot.year),
+                                   year=data$year[!duplicated(data$plot.year)],
+                                   name=data$X.number[!duplicated(data$plot.year)],
+                                   lat=NA,
+                                   long=NA,
+                                   address=NA,
+                                   area="cm2"),
+                        data.frame(species=unique(data$plant.sp), taxonomy="Plantae")))
+    }
+
+
 }
 
-# Doesn't work right now!!!
-# need to fix the years
-if(FALSE)
-.mendonca.2018 <- function(...){
-	tmp <- tempfile()
-	download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp)
-	data <- read.csv(.unzip("CERRADO_SM_Capture.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
-	data <- data[!is.na(data$Individuals_captured),]
-	data$Year_finsh <- as.numeric(data$Year_finish)
-	data <- data[!is.na(data$Year_finish),]
-	ids <- paste(data$id, data$Year_finish)
-	#ids <- ids[-c(1513:1536)]
-	# lat/long data
-	tmp2 <- tempfile()
-	download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp2)
-	ll_data <- read.csv(.unzip("CERRADO_SM_Study_Site.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
-	ll_data <- ll_data[,c(1,7,8)]
-	ll_data$id <- unique(ids)
-	names(ll_data) <- c("id", "lat", "long")
-	ll_data$year <- ll_data$id; ll_data$name <- ll_data$id
-	ll_data$address <- "Cerrado ecosystem: Brazil, Boliva, Paraguay"; ll_data$area <- "live_trap"
-	return(.df.melt(data$Actual_species_name,
-			ids,
-			data$Individuals_captured,
-			data.frame(units = "#"),
-			ll_data,
-			data.frame(species = unique(data$Actual_species_name), taxonomy = "Animalia")
-	      )
-	)
-}
+################################
+# NEED FIXING ##################
+################################
+if(FALSE){
+    .lightfoot.2016 <- function(...) {
+        data <- read.table("http://sev.lternet.edu/sites/default/files/data/sev-106/sev106_hopperdynamics_20150826.txt", header=T, sep=",")
+        data$month.year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
+        spec_codes <- c("ACPI","AGDE","AMCO","ARCO","ARPS","AUEL","AUFE","BOAR",
+                        "BRMA","CIPA","COCR","COOC","COTE","DABI","ERSI","HATR",
+                        "HERU","HEVI","HICA","LAAZ","LEWH","MEAR","MEAZ","MEBO",
+                        "MEGL","MELA","MEOC","METE","OPOB","PAPA","PHQU","PHRO",
+                        "PSDE","PSTE","SCNI","SYMO","TRCA","TRFO","TRKI","TRPA",
+                        "TRPI","XACO","XAMO")
+        species <- c("Acantherus piperatus","Ageneotettix deorum",
+                     "Amphitornus coloradus","Arphia conspersa",
+                     "Arphia pseudonietana","Aulocara elliotti",
+                     "Aulocara femoratum","Bootettix argentatus",
+                     "Brachystola magna","Cibolacris parviceps",
+                     "Cordillacris crenulata","Cordillacris occipitalis",
+                     "Conozoa texana","Dactylotum bicolor",
+                     "Eritettix simplex","Hadtrotettix trifasciatus",
+                     "Heliaula rufa","Hesperotettix viridis",
+                     "Hippopedon capito","Lactista azteca","Leprus wheeleri",
+                     "Melanoplus aridus","Melanoplus arizonae",
+                     "Melanoplus bowditchi","Melanoplus gladstoni",
+                     "Melanoplus lakinus","Melanoplus occidentalis",
+                     "Mermeria texana","Opeia obscura","Paropomala pallida",
+                     "Phlibostroma quadrimaculatum","Phrynotettix robustus",
+                     "Psoloessa delicatula","Psoloessa texana",
+                     "Schistocerca nitens","Syrbula montezuma",
+                     "Trimerotropis californicus","Tropidolophus formosus",
+                     "Trachyrhachis kiowa","Trimerotropis pallidipennis",
+                     "Trimerotropis pistrinaria","Xanthippus corallipes",
+                     "Xanthippus montanus")
+        metadata <- data.frame(spec_codes, species)
+        data$SPECIES <- metadata$species[match(data$SPECIES, metadata$spec_codes)]
+        data <- with(data, tapply(CNT, list(site_year, SPECIES), sum, na.rm=TRUE))
+        data$site_year <- with(data, paste(SITE, year, sep="_"))
+        temp <- strsplit(rownames(data), "_")
+        year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
+        year <- format(as.Date(data$DATE, format="%m/%Y"),"%Y")
+        name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
+        #needs some "burned" info?...
+        return(.df.melt(data$species, data$SITE, data$CNT,
+                        data.frame(units="#"),
+                        data.frame(id=unique(data$plot_year), year, name, lat=NA, long=NA, address="Sevilleta National Wildlife Refuge, New Mexico", area=NA),
+                        data.frame(species=unique(data$species), taxonomy="Orthoptera")))
+    }
 
-# in progress
-# Error in data.frame(id = rownames(data), year = years, name = names, lat = NA, : arguments imply differing number of rows: 20, 24, 1 
-if(FALSE)
-.sepulveda.2016 <- function(...){
-	tmp <- tempfile()
-	download.file("http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0157910.s001", tmp)
-	data <- read.xls(tmp, 1, skip=1, fileEncoding="Latin1")
-	data <- data[1:20,]
-	years <- colnames(data)[2:25]
-	names(data) <- c("species", paste(rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4), names(data)[2:25], sep="_"))
-	d2 <- t(data)
-	names <- rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4)
-	return(.matrix.melt(data,
-			   data.frame(units = "#"),
-			   data.frame(id = rownames(data), year = years, name= names, lat= NA, long= NA, address="Southwestern Chilean coast", area = NA), 
-                           data.frame(species=colnames(data), taxonomy = NA)
-	      )	       
-	)
-}
+    .fia.2018 <- function(...){
+        .get.fia <- function(state, var, select){
+            t.zip <- tempfile()
+            download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
+            unzip(t.zip)
+            data <- fread(paste0(state,"_",var,".csv"), select=select)
+            unlink(paste0(state,"_",var,".csv"))
+            return(data)
+        }
 
-# metadata needs fixing
-if(FALSE)
-.bried.2017  <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.151171/Dryad.data.xlsx?sequence=1", tmp)
-	data <- read.xls(tmp, 1)
-	n <- paste(data$Latitude, data$Longitude, sep = "_")
-	comm <- data[,-c(1:4)]
-	comm$Region <- n
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2017, name = , lat= , long = , address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Insecta")
-			    )
-        )
-}
+        states <- c("PR","VI")#c("AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY", "AS","GU","MP","PW","PR","VI")
+        data <- vector("list", length(states))
 
-# datasets on chiclids - each function downloads a community dataset for a different region
+        for(i in seq_along(states)){
+            #Download/read in data
+            tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
+            cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
+            plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
 
-if(FALSE)
-# metadata needs fixing
-# Kigoma town
-.britton.2017.a <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148126/BrittonEtAl2017_KigomaTown.csv?sequence=3", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]	
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
+            #Subset everything, remove sites with multiple/ambiguous codings, merge
+            tree <- tree[tree$DIA > 1.96,]
+            cond <- cond[cond$PLT_CN %in% names(Filter(function(x) x==1, table(cond$PLT_CN))),]
+            data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
+            data[[i]]$state <- states[i]
+        }
+        data <- rbindlist(data)
+        t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
+        data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
+    }
 
-if(FALSE)
-# metadata needs fixing
-# Kigoma deforested
-.britton.2017.b <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148127/BrittonEtAl2017_KigomaDeforested.csv?sequence=3", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
+    .lamotte.1936 <- function(...){
+        species <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
+        .df.melt(species,
+                 rep("49_Camp_NV_-15750000", length(species)),
+                 rep(1,length(species)),
+                 data.frame(units="p/a", treatment="paleoecology"),
+                 data.frame(id="49_Camp_NV_-15750000", year=-15750000, name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"),
+                 data.frame(species=species,taxonomy=NA))
 
-if(FALSE)
-# metadata needs fixing
-# Kalilani village
-.britton.2017.c <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148128/BrittonEtAl2017_KalilaniVillage.csv?sequence=1", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
+    }
 
-if(FALSE)
-# metadata needs fixing
-# Jakobsen's beach
-.britton.2017.d <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148129/BrittonEtAl2017_Jakobsen%27sBeach.csv?sequence=3", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
+    .tomasovych.2010a <- function(...){
+        species <- read.xls(suppdata("10.5061/dryad.1225", "abundances-S California 1975.xls"), skip=1, header=TRUE)
+        species.clean <- species[,-1]
+        comm <- t(as.matrix(species.clean))
+        rownames(comm) <- species$X
+        rownames(comm)
+    }
+
+    .mendonca.2018 <- function(...){
+        # need to fix the years
+        tmp <- tempfile()
+        download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp)
+        data <- read.csv(.unzip("CERRADO_SM_Capture.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
+        data <- data[!is.na(data$Individuals_captured),]
+        data$Year_finsh <- as.numeric(data$Year_finish)
+        data <- data[!is.na(data$Year_finish),]
+        ids <- paste(data$id, data$Year_finish)
+        #ids <- ids[-c(1513:1536)]
+        # lat/long data
+        tmp2 <- tempfile()
+        download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp2)
+        ll_data <- read.csv(.unzip("CERRADO_SM_Study_Site.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
+        ll_data <- ll_data[,c(1,7,8)]
+        ll_data$id <- unique(ids)
+        names(ll_data) <- c("id", "lat", "long")
+        ll_data$year <- ll_data$id; ll_data$name <- ll_data$id
+        ll_data$address <- "Cerrado ecosystem: Brazil, Boliva, Paraguay"; ll_data$area <- "live_trap"
+        return(.df.melt(data$Actual_species_name,
+                        ids,
+                        data$Individuals_captured,
+                        data.frame(units = "#"),
+                        ll_data,
+                        data.frame(species = unique(data$Actual_species_name), taxonomy = "Animalia")
+                        )
+               )
+    }
+
+    # Error in data.frame(id = rownames(data), year = years, name =
+    # names, lat = NA, : arguments imply differing number of rows: 20,
+    # 24, 1
+    .sepulveda.2016 <- function(...){
+        tmp <- tempfile()
+        download.file("http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0157910.s001", tmp)
+        data <- read.xls(tmp, 1, skip=1, fileEncoding="Latin1")
+        data <- data[1:20,]
+        years <- colnames(data)[2:25]
+        names(data) <- c("species", paste(rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4), names(data)[2:25], sep="_"))
+        d2 <- t(data)
+        names <- rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4)
+        return(.matrix.melt(data,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = years, name= names, lat= NA, long= NA, address="Southwestern Chilean coast", area = NA), 
+                            data.frame(species=colnames(data), taxonomy = NA)
+                            )	       
+               )
+    }
+
+    # Metadata woes
+    .bried.2017  <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.151171/Dryad.data.xlsx?sequence=1", tmp)
+        data <- read.xls(tmp, 1)
+        n <- paste(data$Latitude, data$Longitude, sep = "_")
+        comm <- data[,-c(1:4)]
+        comm$Region <- n
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2017, name = , lat= , long = , address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Insecta")
+                            )
+               )
+    }
+
+    # datasets on chiclids - each function downloads a community
+    # dataset for a different region
+    # Kigoma town
+    .britton.2017.a <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148126/BrittonEtAl2017_KigomaTown.csv?sequence=3", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]	
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+    # Kigoma deforested
+    .britton.2017.b <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148127/BrittonEtAl2017_KigomaDeforested.csv?sequence=3", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+    # Kalilani village
+    .britton.2017.c <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148128/BrittonEtAl2017_KalilaniVillage.csv?sequence=1", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+    # Jakobsen's beach
+    .britton.2017.d <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148129/BrittonEtAl2017_Jakobsen%27sBeach.csv?sequence=3", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+    # Gombe stream
+    .britton.2017.e <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148130/BrittonEtAl2017_GombeNP.csv?sequence=1", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+
+    # Mahale mountain 1
+    .britton.2017.f <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148131/BrittonEtAl2017_MahaleNPS1.csv?sequence=1", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+    # Mahale mountain 2
+    .britton.2017.g <- function(...){
+        tmp <- tempfile()
+        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148132/BrittonEtAl2017_MahaleNPS2.csv?sequence=3", tmp)
+        data <- read.csv(tmp, skip=1)
+        data <- data[-c(1,2),]
+        names(data)[1] <- "species"
+        comm <- t(data)
+        return(.matrix.melt(comm,
+                            data.frame(units = "#"),
+                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
+                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
+                            ))
+    }
+
+    .drew.2015<-function(...){
+        expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.93108/Supplemental%201.csv?sequence=1",as.is = TRUE)
+        expdata$binom<-paste(expdata$Genus,expdata$species,sep=".")
+        
+        comm<-t(expdata[,4:6])
+        colnames(comm)<-expdata$binom
+        
+        #meta data is basically not a thing, so this may need to be scrapped after all
+        
+        return(.matrix.melt(comm,
+                            data.frame(units="p/a"),
+                            sitedata,
+                            data.frame(speccies=expdata$binom,taxonomy=NA)
+                            )
+               )
+    }
+
+    .osuri.2016<-function(...){
+        expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.109139/Osuri_Sanakran_2016_JAE_plot_data.csv?sequence=2",as.is = TRUE)
+
+        comm <- with(expdata, tapply(species, list(species, site.name), length))
+        comm[is.na(comm)] <- 0
+        comm<-t(comm)
+        
+        #meta data is limited, what could be easily found is in the expdata  data frame
+        
+        return(.matrix.melt(comm,
+                            data.frame(units="#"),
+                            sitedata,
+                            data.frame(species=expdata$species,taxonomy=NA)
+                            )
+               )
+    }
+
+    .helmus.2013 <- function(...){
+        library(pez) # This isn't how we declare packages in 'real'
+        # packages for the time being this is sufficient
+        data(laja)
+        return(.matrix.melt(invert.sites))
+    }
+
+    .jain.2017 <- function(...){
+        species <- read.xls(suppdata("10.5061/dryad.177q4", "Jain_etal_2016_Butterfly%20abundance%20across%20sites_22Dec2016.xlsx"), skip=5, header=TRUE, as.is=TRUE)
+        species.clean <- species[,c(-1:-15,-38)]
+        comm <- t(as.matrix(species.clean))
+        colnames(comm) <- species$Scientific.name
+        return(.matrix.melt(comm,
+                            data.frame(units="#", treatment=NA),
+                            data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
+                            data.frame(species=colnames(comm), taxonomy=NA)))
+    }
 
 
-if(FALSE)
-# metadata needs fixing
-# Gombe stream
-.britton.2017.e <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148130/BrittonEtAl2017_GombeNP.csv?sequence=1", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
-
-if(FALSE)
-# metadata needs fixing
-# Mahale mountain 1
-.britton.2017.f <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148131/BrittonEtAl2017_MahaleNPS1.csv?sequence=1", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
-}
-
-if(FALSE)
-# metadata needs fixing
-# Mahale mountain 2
-.britton.2017.g <- function(...){
-	tmp <- tempfile()
-	download.file("https://datadryad.org/bitstream/handle/10255/dryad.148132/BrittonEtAl2017_MahaleNPS2.csv?sequence=3", tmp)
-	data <- read.csv(tmp, skip=1)
-	data <- data[-c(1,2),]
-	names(data)[1] <- "species"
-	comm <- t(data)
-	return(.matrix.melt(comm,
-			    data.frame(units = "#"),
-			    data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA)
-			    data.frame(species = colnames(data), taxonomy = "Chiclidae")
-	       ))
 }
