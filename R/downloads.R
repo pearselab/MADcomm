@@ -1622,7 +1622,7 @@ petermann.2016 <- function(...){
   subdata[is.na(subdata)] <- 0
   subdata[subdata > 0] <- 1
   return(.matrix.melt(subdata, 
-                      data.frame(units="#"), 
+                      data.frame(units="p/a"), 
                       data.frame(id=rownames(subdata), year=2013, name=rownames(subdata), lat='144091.438', long='307635.435', address="Edwin S. George Reserve (Michigan, USA)", area=NA),
                       data.frame(species=colnames(subdata), taxonomy="Amphibia")))
 }
@@ -1645,11 +1645,58 @@ petermann.2016 <- function(...){
   plots <- plots_years[seq(1,length(plots_years), 2)]
   years <- plots_years[seq(2,length(plots_years), 2)]
   return(.matrix.melt(subdata, 
-                      data.frame(units="#"), 
+                      data.frame(units="p/a"), 
                       data.frame(id=rownames(subdata), year=years, name=plots, lat='-37.300000', long='149.100000', address="Surrounding areas of New South Wales (NSW), southeastern Australia", area=NA),
                       data.frame(species=colnames(subdata), taxonomy="Amphibia")))
 }
+
+################################################
+# CLAMP FUNCTIONS ##############################
+# Working on wrapper for all functions?
+################################################
+
+## Fixed, although not elegantly
+.lamotte.1936 <- function(...){
+  data <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
+  data <- gsub(' ','_',data)
+  data <- gsub('\\\\','',data)
+  data[c(2,3,6,7,11,16,17,18,19,20,21,22,23,24,25)] <- c('Populus_washoensis_lindgrenii','Salix_arbutus_pp','Q_simulata_castanop_umb','Fagus_incl_sorbus','Nordenskioldia_cebatha','Prunus_masoni','Acer_medianum','Acer_smileyi','Acer_busamarum','Acer_collawashense','Oreopanax','Acer_negundo','Phyllites_succosa','Arbutus_pp','Cedrela')
+  species <- matrix(data[c(1:25)],25,1)
+  subdata <- matrix(1,nrow=1,ncol=length(species[,1]))
+  colnames(subdata) <- species[,1]
+  rownames(subdata) <- "49_Camp_NV_-15750000"
+  subdata <- as.matrix(subdata)
+  return(.matrix.melt(subdata,data.frame(units="p/a"), 
+           data.frame(id=rownames(subdata), year=-15750000,name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"),
+           data.frame(species=colnames(subdata), taxonomy="NA")))
+}
   
+.axelrod.1956 <- function(...){
+  data <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/Aldrich%20Station%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=6)[,2]
+  data <- gsub(' ','_',data)
+  species <- matrix(data[c(1:22)],22,1)
+  subdata <- matrix(1,nrow=1,ncol=length(species[,1]))
+  colnames(subdata) <- species[,1]
+  rownames(subdata) <- "Aldrich_Station_NV_-12850000"
+  subdata <- as.matrix(subdata)
+  return(.matrix.melt(subdata,data.frame(units="p/a"), 
+                      data.frame(id=rownames(subdata), year=-12850000,name="Aldrich_Station_NV",lat="38.54",long="-118.43", address=NA, area="paleo"),
+                      data.frame(species=colnames(subdata), taxonomy="NA")))
+}
+
+.axelrod.1960 <- function(...){
+  data <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/Anaverde%20CA.xls", as.is=TRUE, fileEncoding="latin1", skip=6)[,2]
+  data <- gsub(' ','_',data)
+  species <- matrix(data[c(1:15)],15,1)
+  subdata <- matrix(1,nrow=1,ncol=length(species[,1]))
+  colnames(subdata) <- species[,1]
+  rownames(subdata) <- "Anaverde_CA-10000000"
+  subdata <- as.matrix(subdata)
+  return(.matrix.melt(subdata,data.frame(units="p/a"), 
+                      data.frame(id=rownames(subdata), year=-10000000,name="Anaverde_CA",lat="34.32",long="-118.23", address=NA, area="paleo"),
+                      data.frame(species=colnames(subdata), taxonomy="NA")))
+}
+
 ################################
 # ARGON FUNCTIONS ##############
 # - WORKING BUT NOT DATA RELEASE
@@ -1823,17 +1870,6 @@ if(FALSE){
         data <- rbindlist(data)
         t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
         data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
-    }
-
-    .lamotte.1936 <- function(...){
-        species <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
-        .df.melt(species,
-                 rep("49_Camp_NV_-15750000", length(species)),
-                 rep(1,length(species)),
-                 data.frame(units="p/a", treatment="paleoecology"),
-                 data.frame(id="49_Camp_NV_-15750000", year=-15750000, name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"),
-                 data.frame(species=species,taxonomy=NA))
-
     }
 
     .tomasovych.2010a <- function(...){
