@@ -1673,9 +1673,11 @@ petermann.2016 <- function(...){
                       data.frame(species=colnames(subdata), taxonomy="NA")))
 }
 
-## CLAMP WRAPPER BELOW. Be careful, but have fun!
-## Potential Issue: Figure out handling of duplicate df.names (e.g. a,b,c?; 1,2,3?) 
+## CLAMP WRAPPERS BELOW. Have fun, but be careful!
+## Issue: Figure out handling of duplicate df.names (e.g. a,b,c?) 
+## Issue: UCMP/USNM df.name formatting (e.g. 1,2,3?)
 
+### CLAMP Neogene Wrapper:: 
 .clamp.neogene <- function(dfname){
   
   dflist<-as.vector(c(".axelrod.1956a",".axelrod.1950",".oliver.1936",".axelrod.1991",".ucmp.1",".axelrod.1956b",
@@ -1748,25 +1750,162 @@ petermann.2016 <- function(...){
   data <- gsub("[^[:alnum:][:space:]]","",data)
   data <- gsub(' ','_',data)
   
-  species <- character()
+  sp <- character()
   for (row in 1:length(data)){
     if(nchar(data[row]) > 2){ 
-      species[row] <- data[row]
+      sp[row] <- data[row]
     }
     else {
       break
     }
   }
   
-  species <- as.matrix(species)
-  subdata <- matrix(1,nrow=1,ncol=length(species[,1]))
-  colnames(subdata) <- species[,1]
+  sp <- as.matrix(sp)
+  subdata <- matrix(1,nrow=1,ncol=length(sp[,1]))
+  colnames(subdata) <- sp[,1]
   colnames(subdata) <- make.unique(colnames(subdata),sep='_')
   rownames(subdata) <- name
   subdata <- as.matrix(subdata)
   
   return(.matrix.melt(subdata,data.frame(units="p/a"),
                       data.frame(id=rownames(subdata), year=age,name=name,lat=lat,long=lon, address=NA, area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="NA")))
+}
+
+### CLAMP Paleogene Wrapper:: 
+
+.clamp.paleogene <- function(dfname){
+  
+  dflist<-as.vector(c('.usgsusnm.1','.uwburke.2737','.mcginitie.1941','.gscusgs.1','.sanborn.1935','.axelrod.1966','.wolfe.1991',
+                      '.mcginitie.1953','.chaney.1933','.chaney.1927','.macginitie.1969','.clarno','.macginitie.1974','.uwburke.4132',
+                      '.wolfe.1994a','.potbury.1935','.wolfe.1998a','.ucmpusnm','.usgs.8637','.burke','.usgs.9676','.usgs.9678','.usgs.9680',
+                      '.puget.9694','.puget.9731','.usgsusnm.2','.wolfe.1994b','.usgs.9841','.uwburke','.lakhanpal.1958','.wolfe.1998b',
+                      '.usnm.1','.usgsusnm.2','.wolfe.1994c','.ucmpusgs','.wolfe.1998c'))
+  linklist <- as.vector(c('http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Bilyeu%20Creek%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Boot%20Hill%20WA%20(Republic).xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Chalk%20Bluffs%20CA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Chua%20Chua%20BC.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Comstock%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Copper%20Basin%20NV.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Creede%20CO.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Florissant%20CO.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Goshen%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Grays%20Ranch%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Green%20River%20CO_UT.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/John%20Day%20Gulch%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Kissinger%20Lakes%20WY.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Knob%20Hill%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Kulthieth%20AK.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/La%20Porte%20CA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Little%20Mountain%20WY.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Lyons%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Mitchell%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/One%20Mile%20Creek%20BC.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209676%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209678%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209680%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209694%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209731%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209833%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209835%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Puget%209841%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Republic%20WA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Rujada%20Point%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Salmon%20ID.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Sandstone%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Susanville%20CA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Sweet%20Home%20CA.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Willamette%20OR.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Paleogene_Scoresheets/Yaquina%20OR.xls'))
+  
+  catalog <- data.frame(dflist,linklist)
+  catalog$linklist <- as.character(catalog$linklist)
+  dfnum <- which(catalog$dflist==deparse(substitute(dfname)))
+  link <- catalog$linklist[dfnum]
+  data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=1)
+  age <- data[1,9]
+  age <- as.numeric(sub(".*assumed age *(.*?) * Ma.*", "\\1", age))
+  age <- -1000000*age
+  name <- data[1,2]
+  name <- gsub(' ','_',name)
+  lat <- data[1,4]
+  lat <- as.numeric(gsub("°", "", lat, fixed = TRUE))
+  lon <- data[1,5]
+  lon <- as.numeric(gsub("°", "", lon, fixed = TRUE))
+  data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=6)[,2]
+  data <- gsub("[^[:alnum:][:space:]]","",data)
+  data <- gsub(' ','_',data)
+  
+  sp <- character()
+  for (row in 1:length(data)){
+    if(nchar(data[row]) > 2){ 
+      sp[row] <- data[row]
+    }
+    else {
+      break
+    }
+  }
+  
+  sp <- as.matrix(sp)
+  subdata <- matrix(1,nrow=1,ncol=length(sp[,1]))
+  colnames(subdata) <- sp[,1]
+  colnames(subdata) <- make.unique(colnames(subdata),sep='_')
+  rownames(subdata) <- name
+  subdata <- as.matrix(subdata)
+  
+  return(.matrix.melt(subdata,data.frame(units="p/a"),
+                      data.frame(id=rownames(subdata), year=age,name=name,lat=lat,long=lon, address=NA, area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="NA")))
+}
+### CLAMP Cretaceous Wrapper:: 
+.clamp.cretaceous <- function(dfname){
+  
+  dflist<-as.vector(c('.ginras.1','.spicer.2002','.ginras.2','.ginras.3','.ginras.4','.rasusnm.1',
+                      '.budantsev.1968','.craggs.2005','.spicer.2008a','.spicer.2008b'))
+  linklist <- as.vector(c('http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Arman%20(Cenomanian).xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Grebenka.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Kamchatkan%20Penzlina.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Kamchatkan%20Kaysayam.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Kazakhstan%20(Cenomanian).xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/North%20Slope%20Coniacian.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Novaya%20Sibir%20(Turonian).xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Tylpeggrgynai%20Flora.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Vilui%20123A123%20Cenomanian.xls',
+                          'http://clamp.ibcas.ac.cn/Fossil_scoresheets/Cretaceous_Scoresheets/Vilui%20123B123%20(Cenomanian).xls'))
+  
+  linklist <- gsub('123','\'',linklist)
+  
+  catalog <- data.frame(dflist,linklist)
+  catalog$linklist <- as.character(catalog$linklist)
+  dfnum <- which(catalog$dflist==deparse(substitute(dfname)))
+  link <- catalog$linklist[dfnum]
+  data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=1)
+  name <- data[1,2]
+  name <- gsub("[^[:alnum:][:space:]]","",name)
+  name <- gsub(' ','_',name)
+  data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=6)[,2]
+  data <- gsub("[^[:alnum:][:space:]]","",data)
+  data <- gsub(' ','_',data)
+  
+  sp <- character()
+  for (row in 1:length(data)){
+    if(nchar(data[row]) > 2){ 
+      sp[row] <- data[row]
+    }
+    else {
+      break
+    }
+  }
+  
+  sp <- as.matrix(sp)
+  subdata <- matrix(1,nrow=1,ncol=length(sp[,1]))
+  colnames(subdata) <- sp[,1]
+  colnames(subdata) <- make.unique(colnames(subdata),sep='_')
+  rownames(subdata) <- name
+  subdata <- as.matrix(subdata)
+  
+  return(.matrix.melt(subdata,data.frame(units="p/a"),
+                      data.frame(id=rownames(subdata), year=NA,name=name,lat=NA,long=NA, address=NA, area=NA),
                       data.frame(species=colnames(subdata), taxonomy="NA")))
 }
 
