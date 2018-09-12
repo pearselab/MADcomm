@@ -938,13 +938,12 @@ clean.predicts <- function(data) {
                                other="Plant study; Percent cover of species and ground")))
 }
 
-.albouy.2015 <- function(...) {
-    temp <- tempfile()
-    download.file("http://esapubs.org/archive/ecol/E096/203/Presence_absence_data.zip", temp)
-    data <- read.csv(unz(temp, "Observed_grid_1980.csv"))
-    unlink(temp)
-
-}
+#.albouy.2015 <- function(...) {
+#    temp <- tempfile()
+#    download.file("http://esapubs.org/archive/ecol/E096/203/Presence_absence_data.zip", temp)
+#    data <- read.csv(unz(temp, "Observed_grid_1980.csv"))
+#    unlink(temp)
+#}
 
 .chamailleJammes.2016 <- function(...){
     data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1), stringsAsFactors=FALSE)
@@ -1282,7 +1281,7 @@ petermann.2016 <- function(...){
                         species.meta))
 }
 
-
+if(FALSE){
 .brant.2018 <- function(...){
     tmp.file <- tempfile()
     download.file("https://zenodo.org/record/1198846/files/template_MosquitoDataBrant77.xlsx", tmp.file)
@@ -1304,6 +1303,7 @@ petermann.2016 <- function(...){
                         data.frame(units="#"),
                         data.frame(id=DailyHLC$site_year, name=site.metadata$Location, year=site.metadata$Date, lat="4.6353 to 4.9654", long="116.9542 to 117.8004", address="SAFE project, Borneo", area="attracted to humans"),
                         species.meta))
+}
 }
 
 .truxa.2015 <- function(...){

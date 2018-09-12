@@ -53,8 +53,8 @@ nacdb <- function(cache, datasets, delay=5){
             output[[i]] <- readRDS(path)
             next()
         }
-        
-        output[[i]] <- eval(as.name(datasets[i]))()
+        if(FALSE){
+            output[[i]] <- eval(as.name(datasets[i]))()
         
         output[[i]]$data$study <- datasets[i]
         output[[i]]$spp.metadata$study <- datasets[i]
@@ -65,8 +65,12 @@ nacdb <- function(cache, datasets, delay=5){
         
         if(!is.na(path))
             saveRDS(output[[i]], path)
-        Sys.sleep(delay)
+            Sys.sleep(delay)
+        }
+        
     }
+
+    output <- output[!is.na(output)]
     
     # Merge data and return
     output <- list(
