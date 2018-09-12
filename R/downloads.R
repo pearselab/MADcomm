@@ -1519,6 +1519,137 @@ if(FALSE){
                         data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
+.kay.2017 <- function(...){
+  # Species table used in the calculation of co-occurrence networks
+  data <- read.csv(text=paste0(head(readLines(suppdata("10.5061/dryad.3j7f6", "Dryad_data.csv")), -10), collapse="\n"))
+  # data$Site <- gsub("-", "_", data$Site)
+  colnames(data)[(11:69)] <- c('Acritoscincus_duperreyi','Acritoscincus_platynotum','Amalosia_rhombifer',"Amalosia_tryoni",
+                               'Amphibolurus_burnsi','Amphibolurus_muricatus','Anomalopus_leuckartii','Aprasia_parapulchella','Carlia_pectoralis',
+                               'Carlia_tetradactyla','Carlia_vivax','Chelodina_longicollis','Christinus_marmoratus','Cryptoblepharus_pannosus',
+                               'Cryptoblepharus_pulcher','Cryptophis_nigrescens','Ctenotus_orientalis','Ctenotus_spaldingi','Ctenotus_taeniolatus',
+                               'Delma_inornata','Delma_plebeia','Delma_tincta','Demansia_psammophis_ssp_psammophis','Diplodactylus_vittatus',
+                               'Diporiphora_nobbi','Egernia_cunninghami','Egernia_striolata','Furina_diadema','Gehyra_dubia','Gehyra_variegata',
+                               'Hemiergis_talbingoensis','Heteronotia_binoei','Lampropholis_delicata','Lampropholis_guichenoti','Lerista_bougainvillii',
+                               'Lerista_fragilis','Lerista_timida','Liopholis_whitii','Lucasium_steindachneri','Lygisaurus_foliorum','Menetia_greyii',
+                               'Menetia_timlowi','Morethia_boulengeri','Nebulifera_robusta','Parasuta_dwyeri','Pogona_barbata','Pseudechis_guttatus',
+                               'Pseudechis_porphyriacus','Pseudonaja_textilis','Ramphotyphlops_nigrescens','Ramphotyphlops_wiedii','Saiphos_equalis',
+                               'Strophurus_intermedius','Suta_suta','Tiliqua_rugosa_ssp_aspera','Tiliqua_scincoides_ssp_scincoides','Underwoodisaurus_milii',
+                               'Unidentified_skink','Varanus_varius')
+  # Site name, species, season, count
+  data <- melt(data,measure.vars=c('Acritoscincus_duperreyi','Acritoscincus_platynotum','Amalosia_rhombifer',"Amalosia_tryoni",
+                                   'Amphibolurus_burnsi','Amphibolurus_muricatus','Anomalopus_leuckartii','Aprasia_parapulchella','Carlia_pectoralis',
+                                   'Carlia_tetradactyla','Carlia_vivax','Chelodina_longicollis','Christinus_marmoratus','Cryptoblepharus_pannosus',
+                                   'Cryptoblepharus_pulcher','Cryptophis_nigrescens','Ctenotus_orientalis','Ctenotus_spaldingi','Ctenotus_taeniolatus',
+                                   'Delma_inornata','Delma_plebeia','Delma_tincta','Demansia_psammophis_ssp_psammophis','Diplodactylus_vittatus',
+                                   'Diporiphora_nobbi','Egernia_cunninghami','Egernia_striolata','Furina_diadema','Gehyra_dubia','Gehyra_variegata',
+                                   'Hemiergis_talbingoensis','Heteronotia_binoei','Lampropholis_delicata','Lampropholis_guichenoti','Lerista_bougainvillii',
+                                   'Lerista_fragilis','Lerista_timida','Liopholis_whitii','Lucasium_steindachneri','Lygisaurus_foliorum','Menetia_greyii',
+                                   'Menetia_timlowi','Morethia_boulengeri','Nebulifera_robusta','Parasuta_dwyeri','Pogona_barbata','Pseudechis_guttatus',
+                                   'Pseudechis_porphyriacus','Pseudonaja_textilis','Ramphotyphlops_nigrescens','Ramphotyphlops_wiedii','Saiphos_equalis',
+                                   'Strophurus_intermedius','Suta_suta','Tiliqua_rugosa_ssp_aspera','Tiliqua_scincoides_ssp_scincoides','Underwoodisaurus_milii',
+                                   'Unidentified_skink','Varanus_varius'))
+  # Site name, species, season, count
+  subdata <- data[,c(3:4,11:12)]
+  subdata$Site_Year<-with(data, paste(Site, Year, sep = "_"))
+  colnames(subdata)[3:4]<- c('Species','Count')
+  subdata$Count[subdata$Count>0] <- 1
+  subdata <- with(subdata, tapply(Count, list(Site_Year, Species), sum))
+  # .df.melt(value=subdata$value, species=subdata$variable, site=paste(subdata$Site,subdata$Year), ...othershit...)
+  subdata[is.na(subdata)] <- 0
+  subdata[subdata > 0] <- 1
+  plots_years <- unlist(strsplit(rownames(subdata), "_", fixed=T))
+  plots <- plots_years[seq(1,length(plots_years), 2)]
+  years <- plots_years[seq(2,length(plots_years), 2)]
+  return(.matrix.melt(subdata, 
+                      data.frame(units="#"), 
+                      data.frame(id=rownames(subdata), year=years, name=plots, lat=NA, long=NA, address="Southern Queensland to Southern New South Wales", area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="Animalia")))
+}
+
+.heinen.2017 <- function(...){
+  # Extinct and extant occurrences of frugivorous birds, mammals and reptiles on 
+  # 74 tropical and subtropical oceanic islands within 20 archipelagos worldwide
+  data <- read.table(suppdata("10.5061/dryad.s522m", "Data_Occurrences_IslandFrugivores.txt"), header=T, sep='\t')
+  subdata <- data[,c(5,9,11)]
+  colnames(subdata)[c(1,3)] <- c('Site','Status')
+  subdata$Species <- gsub(' ','_',subdata$Species)
+  subdata <- with(subdata, tapply(Status, list(Site, Species), sum))
+  subdata[is.na(subdata)] <- 0
+  plots_years <- unlist(strsplit(rownames(subdata), "_", fixed=T))
+  plots <- plots_years[seq(1,length(plots_years), 2)]
+  # .df.melt(species=subdata$Species, site.id=subdata$Site,value=subdata$Status)
+  return(.matrix.melt(subdata, 
+                      data.frame(units="#"), 
+                      data.frame(id=rownames(subdata), year=NA, name=plots, lat=NA, long=NA, address="74 tropical and subtropical oceanic islands within 20 archipelagos worldwide", area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="Animalia")))
+}
+
+.werner.2014 <- function(...){
+  # abundance and occupancy patterns for amphibian species 
+  # on the ES George Reserve (Michigan, USA) over multiple years
+  data <- read.xls(suppdata('10.5061/dryad.js47k','Werner_etal_ESGR_PLOS_data_Files.xlsx'),sheet=2)
+  subdata <- data[,-c(3:9)]
+  colnames(subdata) <- c('Year','Site','Ambystoma_laterale','Ambystoma_maculatum', 'Ambystoma_tigrinum','Pseudacris_crucifer', 'Pseudacris_triseriata',  'Rana_pipiens','Rana_sylvatica')
+  subdata$Site <- gsub(' ','',subdata$Site)
+  subdata$Site <- gsub('#','',subdata$Site)
+  subdata$Site <- gsub('\'','',subdata$Site)
+  subdata$Site_Year<-with(subdata, paste(Site, Year, sep = "_"))
+  rownames(subdata) <- subdata[,10]
+  subdata <- subdata[,-c(1,2,10)]
+  subdata[is.na(subdata)] <- 0
+  subdata[subdata > 0] <- 1
+  subdata <- as.matrix(subdata)
+  plots_years <- unlist(strsplit(rownames(subdata), "_", fixed=T))
+  plots <- plots_years[seq(1,length(plots_years), 2)]
+  years <- plots_years[seq(2,length(plots_years), 2)]
+  return(.matrix.melt(subdata, 
+                      data.frame(units="#"), 
+                      data.frame(id=rownames(subdata), year=years, name=plots, lat='42.4585', long='84.0115', address="Edwin S. George Reserve (Michigan, USA)", area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="Amphibia")))
+}
+  
+.price.2015 <- function(...){
+  # Effects of mountaintop removal mining and valley filling 
+  # on the occupancy and abundance of salamander species
+  data <- read.csv(suppdata('10.5061/dryad.5m8f6','Price et al. JAPPL-2015-count-data.csv'))
+  subdata <- data[,c(1,16:43)]
+  subdata$Study.Site <- gsub(' ','',subdata$Study.Site)
+  rownames(subdata) <- subdata$Study.Site
+  subdata <- subdata[,-c(1)]
+  # subdata <- as.matrix(subdata[,-1])
+  subdata <- as.matrix(sapply(split.default(subdata, 0:(length(subdata)-1) %/% 4), rowSums))
+  colnames(subdata) <- c('Gyrinophilus_porphyriticus','Pseudotriton_ruber','Desmognathus_monticola','Eurycea_cirrigera_adult','Eurycea_cirrigera_larvae','Desmognathus_larvae', 'Desmognathus_fuscus')
+  subdata[is.na(subdata)] <- 0
+  subdata[subdata > 0] <- 1
+  return(.matrix.melt(subdata, 
+                      data.frame(units="#"), 
+                      data.frame(id=rownames(subdata), year=2013, name=rownames(subdata), lat='144091.438', long='307635.435', address="Edwin S. George Reserve (Michigan, USA)", area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="Amphibia")))
+}
+
+.westgate.2015 <- function(...){
+  # Frog species occurences across urban-rural sites in australia between 2002-2014
+  data <- read.xls(suppdata('10.5061/dryad.75s51','Frogwatch_dataset.xlsx'),sheet=2)
+  subdata <- data[,c(1:2,11:18)]
+  colnames(subdata) <- c('Site','Year','Crinia_parinsignifera','Crinia_signifera','Limnodynastes_dumerilii','Limnodynastes_peronii','Limnodynastes_tasmaniensis','Litoria_peronii','Litoria_verreauxii','Uperoleia_laevigata')
+  subdata$Site_Year<-with(subdata, paste(Site, Year, sep = "_"))
+  # rownames(subdata) <- subdata[,c(11)]
+  subdata <- subdata[,-c(1,2)]
+  subdata<-aggregate(subdata[,1:8], list(subdata[,9]), function(x) sum(unique(x)))
+  rownames(subdata) <- subdata[,1]
+  subdata <- subdata[,-1]
+  subdata <- as.matrix(subdata)
+  subdata[is.na(subdata)] <- 0
+  subdata[subdata > 0] <- 1
+  plots_years <- unlist(strsplit(rownames(subdata), "_", fixed=T))
+  plots <- plots_years[seq(1,length(plots_years), 2)]
+  years <- plots_years[seq(2,length(plots_years), 2)]
+  return(.matrix.melt(subdata, 
+                      data.frame(units="#"), 
+                      data.frame(id=rownames(subdata), year=years, name=plots, lat='-37.300000', long='149.100000', address="Surrounding areas of New South Wales (NSW), southeastern Australia", area=NA),
+                      data.frame(species=colnames(subdata), taxonomy="Amphibia")))
+}
+  
 ################################
 # ARGON FUNCTIONS ##############
 # - WORKING BUT NOT DATA RELEASE
