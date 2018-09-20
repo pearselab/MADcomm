@@ -44,7 +44,14 @@
 .neon.2018a <- function(...){
     # Internal wrapper
     .site <- function(month, site){
-        possible <- nneo_data("DP1.10072.001", site, month, "simple")$data$files
+        possible <- tryCatch(
+            nneo_data("DP1.10072.001", site, month, "basic")$data$files,
+            error=function(x) NULL
+        )
+        if(is.null(possible)){
+            warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
+            return(NULL)
+        }
         url <- grep(paste0("mam_pertrapnight\\.",month,"\\.basic"), possible$url, value=TRUE)
         if(length(url) > 0){
             data <- read.csv(url, as.is=TRUE)[,c("scientificName", "weight")]
@@ -60,7 +67,7 @@
     metadata <- nneo_product("DP1.10072.001")$siteCodes
     output <- vector("list", length(metadata$siteCode))
     for(i in seq_along(metadata$siteCode))
-        output[[i]] <- do.call(rbind, lapply(unlist(metadata$availableMonths[i]), .site, site=metadata$siteCode[i]))
+        output[[i]] <- do.call(rbind, lapply(metadata$availableMonths[[i]], .site, site=metadata$siteCode[i]))
     output <- do.call(rbind, output)
     output$id <- with(output, paste(site, month, sep="_"))
     output <- na.omit(output)
@@ -81,7 +88,14 @@
 .neon.2018b <- function(...){
     # Internal wrapper
     .site <- function(month, site){
-        possible <- nneo_data("DP1.10022.001", site, month, "simple")$data$files
+        possible <- tryCatch(
+            nneo_data("DP1.10022.001", site, month, "simple")$data$files,
+            error=function(x) NULL
+        )
+        if(is.null(possible)){
+            warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
+            return(NULL)
+        }
         url <- grep(paste0("expertTaxonomistIDProcessed\\.",month,"\\.basic"), possible$url, value=TRUE)
         if(length(url) > 0){
             data <- read.csv(url, as.is=TRUE)[,c("scientificName","plotID"), drop=FALSE]
@@ -117,13 +131,13 @@
 .neon.2018c <- function(...){
     # Internal wrapper
     .site <- function(month, site){
-        tryCatch(
-            possible <- nneo_data("DP1.10098.001", site, month, "simple")$data$files,
+        possible <- tryCatch(
+            nneo_data("DP1.10098.001", site, month, "simple")$data$files,
             error=function(x) NULL
         )
         if(is.null(possible)){
             warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
-            return(data.frame(plotID=character(0), scientificName=character(0), individualID=numeric(0), abundance=numeric(0), neon.site=character(0), year=character(0)))
+            return(NULL)
         }
         url <- grep(paste0("apparentindividual\\.",month,"\\.basic"), possible$url, value=TRUE)
         if(length(url) > 0){
