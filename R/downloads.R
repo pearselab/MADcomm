@@ -162,6 +162,10 @@
                 lookup <- lookup[!duplicated(lookup$individualID),]
                 lookup <- lookup[,c("scientificName","individualID")]
                 data <- merge(data, lookup, "individualID")
+                if(nrow(data)==0){
+                    warning("Illogical/missing individualIDs at site", site, "in month", month, "treating as missing data")
+                    return(NULL)
+                }
                 data$scientificName <- sapply(strsplit(data$scientificName, " "), function(x) paste(x[1:2], collapse="_"))
                 data$plantStatus <- NULL; data$abundance <- -1
                 data <- aggregate(.~plotID+scientificName, data=data, FUN=length)
@@ -175,8 +179,9 @@
     # Get site data
     metadata <- nneo_product("DP1.10098.001")$siteCodes
     output <- vector("list", length(metadata$siteCode))
-    for(i in seq_along(metadata$siteCode))
+    for(i in seq_along(metadata$siteCode)){
         output[[i]] <- do.call(rbind, lapply(metadata$availableMonths[[i]], .site, site=metadata$siteCode[i]))
+    }
     output <- do.call(rbind, output)
     output$id <- with(output, paste(plotID, year, sep="_"))
     output <- na.omit(output)
