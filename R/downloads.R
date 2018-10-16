@@ -48,6 +48,10 @@
             nneo_data("DP1.10072.001", site, month, "basic")$data$files,
             error=function(x) NULL
         )
+        if(nrow(possible)==0){
+            warning("No data at site", site, "in month", month, "; treating as missing data")
+            return(NULL)
+        }
         if(is.null(possible)){
             warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
             return(NULL)
@@ -92,6 +96,10 @@
             nneo_data("DP1.10022.001", site, month, "simple")$data$files,
             error=function(x) NULL
         )
+        if(nrow(possible)==0){
+            warning("No data at site", site, "in month", month, "; treating as missing data")
+            return(NULL)
+        }
         if(is.null(possible)){
             warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
             return(NULL)
@@ -135,6 +143,10 @@
             nneo_data("DP1.10098.001", site, month, "simple")$data$files,
             error=function(x) NULL
         )
+        if(nrow(possible)==0){
+            warning("No data at site", site, "in month", month, "; treating as missing data")
+            return(NULL)
+        }
         if(is.null(possible)){
             warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
             return(NULL)
@@ -159,7 +171,7 @@
         }
         return(NULL)
     }
-
+    
     # Get site data
     metadata <- nneo_product("DP1.10098.001")$siteCodes
     output <- vector("list", length(metadata$siteCode))
