@@ -219,7 +219,6 @@
                 data <- aggregate(clusterSize~plotID+scientificName, data=data, FUN=sum)
                 data$neon.site <- site; data$year <- month
                 return(data)
-            }
         }
         return(NULL)
     }
