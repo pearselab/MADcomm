@@ -1889,7 +1889,7 @@ if(FALSE){
         return(data)
       }
       
-      states <- c("AL","AK","AZ","CA","CO","FL","GA","HI","KS","MD","MA","MI","NH","NM","ND","OK","TN","TX","UT","VA","WA","WI","WY")
+      states <- c("AL","AK") #c("AL","AK","AZ","CA","CO","FL","GA","HI","KS","MD","MA","MI","NH","NM","ND","OK","TN","TX","UT","VA","WA","WI","WY")
       data <- vector("list", length(states))
       
       for(i in seq_along(states)){
