@@ -1880,45 +1880,63 @@ if(FALSE){
     }
 
     .fia.2018 <- function(...){
-        .get.fia <- function(state, var, select){
-            t.zip <- tempfile()
-            download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
-            unzip(t.zip)
-            data <- fread(paste0(state,"_",var,".csv"), select=select)
-            unlink(paste0(state,"_",var,".csv"))
-            return(data)
-        }
-
-        states <- c("PR","VI")#c("AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY", "AS","GU","MP","PW","PR","VI")
-        data <- vector("list", length(states))
-
-        for(i in seq_along(states)){
-            #Download/read in data
-            tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
-            cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
-            plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
-
-            #Subset everything, remove sites with multiple/ambiguous codings, merge
-            tree <- tree[tree$DIA > 1.96,]
-            cond <- cond[cond$PLT_CN %in% names(Filter(function(x) x==1, table(cond$PLT_CN))),]
-            data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
-            data[[i]]$state <- states[i]
-        }
-        data <- rbindlist(data)
-        t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
-        data$state.ref <- paste0(data$state, ".", t[data$PLT_CN])
+      .get.fia <- function(state, var, select){
+        t.zip <- tempfile()
+        download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
+        unzip(t.zip)
+        data <- fread(paste0(state,"_",var,".csv"), select=select)
+        unlink(paste0(state,"_",var,".csv"))
+        return(data)
+      }
+      
+      states <- c("AL","AK","AZ","CA","CO","FL","GA","HI","KS","MD","MA","MI","NH","NM","ND","OK","TN","TX","UT","VA","WA","WI","WY")
+      data <- vector("list", length(states))
+      
+      for(i in seq_along(states)){
+        #Download/read in data
+        tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
+        cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
+        plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
+        
+        #Subset everything, remove sites with multiple/ambiguous codings, merge
+        tree <- tree[tree$DIA > 1.96,]
+        cond <- cond[cond$PLT_CN %in% as.integer64(names(Filter(function(x) x==1, table(cond$PLT_CN)))),]
+        data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
+        data[[i]]$state <- states[i]
+      }
+      
+      data <- rbindlist(data)
+      t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
+      data$site.id <- paste0(data$state, "_", t[as.character(data$PLT_CN)])
+      data$site.id <- paste0(data$site.id, "_", data$INVYR)
+      
+      fia.spp <- read.csv("FIA_SppList.csv") #currently in the pglmm raw data folder
+      fia.spp <- data.table(fia.spp$SPCD, paste0(fia.spp$GENUS, "_", fia.spp$SPECIES))
+      
+      data <- merge(data, fia.spp, by.x="SPCD", by.y="V1")
+      data <- data.frame(data$V2, data$site.id, data$LAT, data$LON, data$ELEV, 
+                         data$STDAGE, data$FORTYPCD, data$CONDID, data$DIA)
+      
+      names(data) <- c("species", "site.id", "lat", "long", "elev", "stdage", "forestclass", "condclass", "diameter")
+      comm <- t(as.matrix(with(data, table(species,site.id))))
+      dia <- aggregate(diameter~species, data, mean)
+      dia.count <- aggregate(diameter~species, data, length)
+      dia$diameter.n <- dia.count$diameter
+      
+      site.df <- data[!duplicated(data$site.id),]
+      site.df <- site.df[,2:8]
+      sites <- rownames(comm)
+      site.df <- site.df[match(sites, site.df$site.id), ]
+      
+      return(.matrix.melt(comm, 
+                          data.frame(units="#"), 
+                          data.frame(id=site.df$site.id, name=NA, year=NA, lat=site.df$lat,
+                                     long=site.df$long, address=NA, area=NA,
+                                     elevation=site.df$elev, class=site.df$forestclass),
+                          data.frame(species=dia$species, taxonomy=NA)))  
+      
     }
-
-    .lamotte.1936 <- function(...){
-        species <- read.xls("http://clamp.ibcas.ac.cn/Fossil_scoresheets/Neogene_Scoresheets/49Camp%20NV.xls", as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
-        .df.melt(species,
-                 rep("49_Camp_NV_-15750000", length(species)),
-                 rep(1,length(species)),
-                 data.frame(units="p/a", treatment="paleoecology"),
-                 data.frame(id="49_Camp_NV_-15750000", year=-15750000, name="49_Camp_NV",lat="40.66",long="-199.66", address=NA, area="paleo"),
-                 data.frame(species=species,taxonomy=NA))
-
-    }
+    
 
     .tomasovych.2010a <- function(...){
         species <- read.xls(suppdata("10.5061/dryad.1225", "abundances-S California 1975.xls"), skip=1, header=TRUE)
