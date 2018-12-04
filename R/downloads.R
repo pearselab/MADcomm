@@ -1910,7 +1910,7 @@ if(FALSE){
       data$site.id <- paste0(data$state, "_", t[as.character(data$PLT_CN)])
       data$site.id <- paste0(data$site.id, "_", data$INVYR)
       
-      fia.spp <- read.csv("FIA_SppList.csv") #currently in the pglmm raw data folder
+      fia.spp <- read.csv("FIA_SppList.csv") #currently in raw_data folder
       fia.spp <- data.table(fia.spp$SPCD, paste0(fia.spp$GENUS, "_", fia.spp$SPECIES))
       
       data <- merge(data, fia.spp, by.x="SPCD", by.y="V1")
