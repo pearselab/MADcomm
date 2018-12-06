@@ -72,17 +72,17 @@
     # Meta-data ##########
     ######################
     .create.other <- function(metadata, columns){
-        if(!all(columns %in% names(metadata))){
+        if(!all(names(metadata) %in% columns)){
             other <- metadata[,!names(metadata) %in% columns, drop=FALSE]
             metadata <- metadata[,names(metadata) %in% columns, drop=FALSE]        
             other <- sapply(seq_along(names(other)), function(y) paste(names(other)[y],other[,y],sep=":"))
-            if(nrow(metadata) > 1)
+            if(ncol(metadata) == 1)
                 other <- paste(other, collapse=";") else other <- apply(other, 1, paste, collapse=";")
             metadata$other <- other
         } else {
             metadata$other <- NA
         }
-        return(metadata[,c(columns,"other")])
+        return(metadata)
     }
     # Study
     if(nrow(study.metadata) > 1)
