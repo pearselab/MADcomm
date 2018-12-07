@@ -1889,7 +1889,7 @@ if(FALSE){
         return(data)
       }
       
-      states <- c("AL","AK") #c("AL","AK","AZ","CA","CO","FL","GA","HI","KS","MD","MA","MI","NH","NM","ND","OK","TN","TX","UT","VA","WA","WI","WY")
+      states <- c("AL","AK","AZ","CA","CO","FL","GA","HI","KS","MD","MA","MI","NH","NM","ND","OK","TN","TX","UT","VA","WA","WI","WY")
       data <- vector("list", length(states))
       
       for(i in seq_along(states)){
@@ -1908,6 +1908,9 @@ if(FALSE){
       data <- rbindlist(data)
       t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
       data$site.id <- paste0(data$state, "_", t[as.character(data$PLT_CN)])
+      uniq.site <- as.data.frame(unique(data[, 15:16]))
+      sample.sites <- as.data.frame(uniq.site %>% group_by(state) %>% sample_n(size = 30))
+      data <- merge(sample.sites, data, by="site.id")
       data$site.id <- paste0(data$site.id, "_", data$INVYR)
       
       fia.spp <- read.csv("FIA_SppList.csv") #currently in raw_data folder
@@ -1933,7 +1936,7 @@ if(FALSE){
                           data.frame(id=site.df$site.id, name=NA, year=NA, lat=site.df$lat,
                                      long=site.df$long, address=NA, area=NA,
                                      elevation=site.df$elev, class=site.df$forestclass),
-                          data.frame(species=dia$species, taxonomy=NA)))  
+                          data.frame(species=dia$species, taxonomy=NA, diameter=dia$diameter)))  
       
     }
     
