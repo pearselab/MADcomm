@@ -1929,7 +1929,7 @@ if(FALSE){
       dia$diameter.n <- dia.count$diameter
       
       site.df <- data[!duplicated(data$site.id),]
-      site.df <- site.df[,2:8]
+      site.df <- site.df[,2:8]nacd
       sites <- rownames(comm)
       site.df <- site.df[match(sites, site.df$site.id), ]
       
