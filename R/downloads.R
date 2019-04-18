@@ -7,6 +7,7 @@
 #' @importFrom gdata drop.levels
 #' @importFrom testdat sanitize_text
 #' @importFrom readxl read_xlsx read_xls read_excel
+#' @importFrom neonUtilities loadByProduct
 #' @export
 .adler.2007 <- function(...){
     data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
@@ -39,54 +40,27 @@
 # NEON wrappers
 # - all of these could use a bit of DRY love; there's a lot of repetition. A task for another day...
 # Mammals
-#' @importFrom nneo nneo_sites nneo_product nneo_data
+#' @importFrom neonUtilities loadByProduct
 #' @export
 .neon.2018a <- function(...){
-    # Internal wrapper
-    .site <- function(month, site){
-        possible <- tryCatch(
-            nneo_data("DP1.10072.001", site, month, "basic")$data$files,
-            error=function(x) NULL
-        )
-        if(nrow(possible)==0){
-            warning("No data at site", site, "in month", month, "; treating as missing data")
-            return(NULL)
-        }
-        if(is.null(possible)){
-            warning("Unparseable JSON at site", site, "in month", month, "treating as missing data")
-            return(NULL)
-        }
-        url <- grep(paste0("mam_pertrapnight\\.",month,"\\.basic"), possible$url, value=TRUE)
-        if(length(url) > 0){
-            data <- read.csv(url, as.is=TRUE)[,c("scientificName", "weight")]
-            data <- data[data$scientificName != "",]
-            data$weight[is.na(data$weight)] <- -1
-            data$month <- month; data$site <- site
-            return(data)
-        }
-        return(NULL)
-    }
-
-    # Get site data
-    metadata <- nneo_product("DP1.10072.001")$siteCodes
-    output <- vector("list", length(metadata$siteCode))
-    for(i in seq_along(metadata$siteCode))
-        output[[i]] <- do.call(rbind, lapply(metadata$availableMonths[[i]], .site, site=metadata$siteCode[i]))
-    output <- do.call(rbind, output)
-    output$id <- with(output, paste(site, month, sep="_"))
-    output <- na.omit(output)
-
-    # Add meta-data and return
-    site.data <- nneo_sites()
-    site.df <- output[!duplicated(output$id),]
-    site.df$lat <- site.data$siteLatitude[match(site.df$site, site.data$siteCode)]
-    site.df$long <- site.data$siteLongitude[match(site.df$site, site.data$siteCode)]
-    site.df$address <- NA; site.df$area <- "10 sherman traps"
-    names(site.df)[names(site.df)=="month"] <- "year"
-    names(site.df)[names(site.df)=="site"] <- "name"
-    site.df$scientificName <- site.df$weight <- NULL
-    return (.df.melt(output$scientificName, output$id, output$weight, data.frame(units="g"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
+  dat <- loadByProduct("DP1.10072.001", site ="all", startdate = NA, enddate = NA)
+  trapnight <- dat$mam_pertrapnight
+  trapnight$collectDate <- substr(trapnight$collectDate,0,7)
+  trapnight$id <- paste0(trapnight$plotID, "_", trapnight$collectDate)
+  data <- trapnight[,c("id", "plotID", "collectDate", "decimalLatitude", "decimalLongitude", "scientificName"),]
+  data <- data[which(data$scientificName!=""),]
+  names(data) <- c("id", "name", "year", "lat", "long", "species")
+  temp <- with(data, paste(id, species))
+  temp.counts <- table(temp)
+  data$value <- temp.counts[temp]
+  data$value <- as.numeric(data$value)
+  data <- unique(data)
+  site.df <- data[, c("id", "name", "year", "lat", "long")]
+  site.df <- unique(site.df)
+  site.df$address <- NA; site.df$area <- "10 sherman traps"
+  return(.df.melt(data$species, data$id, data$value, data.frame(units="g"), site.df, data.frame(species=unique(data$species),taxonomy=NA)))
 }
+
 # Beetles
 #' @export
 .neon.2018b <- function(...){
