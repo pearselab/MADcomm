@@ -8,17 +8,6 @@
 #' @importFrom testdat sanitize_text
 #' @importFrom readxl read_xlsx read_xls read_excel
 #' @export
-.adler.2007 <- function(...){
-    data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
-    comm <- with(data, tapply(area, list(plotyear, species), sum, na.rm=TRUE))
-    comm[is.na(comm)] <- 0
-    year <- as.numeric(paste0("19",substr(rownames(comm), 7, 8)))
-    name <- substr(rownames(comm), 1, 4)
-    return(.matrix.melt(comm,
-                        data.frame(units="area"),
-                        data.frame(id=rownames(comm),year,name,lat="38.8",long="99.3",address="2 miles west of the town of Hays",area="1m2"),
-                        data.frame(species=colnames(comm),taxonomy=NA)))
-}
 
 #' @export
 .anderson.2011 <- function(...){
@@ -243,14 +232,16 @@
     return (.df.melt(output$scientificName, output$id, output$clusterSize, data.frame(units="#"), site.df, data.frame(species=unique(output$scientificName),taxonomy=NA)))
 }
 
+#Species values are numeric instead of integers.
 #' @export
-.chu.2016 <- function(...){
+.chu.2013 <- function(...){
     data <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "allrecords_cover.csv"))
     site.info <- read.csv(suppdata("10.6084/m9.figshare.3556779.v1", "quad_info.csv"))
     colnames(data) <- tolower(colnames(data))
     data$plot_year <- paste(data$quad, data$year, sep = ".")
+    data$value <- as.integer(data$value)
     #Combines rows of similar species and plotyear into one row
-    comm <- with(data, tapply(area, list(plot_year, species), sum, na.rm=TRUE))
+    comm <- with(data, tapply(area, list(plot_year, species), sum, na.rm = TRUE))
     plots_years <- unlist(strsplit(rownames(comm), ".", fixed=T))
     plots <- plots_years[seq(1,length(plots_years), 2)]
     years <- plots_years[seq(2,length(plots_years), 2)]
@@ -258,8 +249,10 @@
     longitude <- site.info$longitude[match(plots, site.info$quadrat)]
     comm[is.na(comm)] <- 0
     return(.matrix.melt(comm,
-                        data.frame(units="area", treatment="grazing"),
-                        data.frame(id=rownames(comm), year=years, name=plots, lat=latitude, long=longitude, address="Central Plains Experimental Range in Nunn, Colorado, USA", area="1m2"),
+                        data.frame(units="unit.unit", treatment="grazing"),
+                        data.frame(id=rownames(comm), year=years, name=plots, lat=latitude, 
+                                   long=longitude, address="Central Plains Experimental Range in Nunn, Colorado, USA", 
+                                   area="1m2"),
                         data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
@@ -305,7 +298,8 @@
     new.data[is.na(new.data)] <- 0
     return(.matrix.melt(new.data,
                         data.frame(units="#"),
-                        data.frame(id=rownames(new.data), year=years, name=site, lat=NA, long=NA, address="Wabash River, Midwest, USA", area=NA),
+                        data.frame(id=rownames(new.data), year=years, name=site, 
+                                   lat=NA, long=NA, address="Wabash River, Midwest, USA", area=NA),
                         data.frame(species=colnames(new.data), taxonomy="Chordata")))
 }
 
@@ -355,7 +349,7 @@ clean.predicts <- function(data) {
     return(.df.melt(data$species,
                     data$site_year,
                     data$Measurement,
-                    data.frame(units="area"),
+                    data.frame(units="unit.unit"),
                     data.frame(id=site.id, year, name, lat, long, address=NA, area=NA),
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
@@ -379,6 +373,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#Species values are numeric instead of integers.
 #' @export
 .predicts.2016d <- function(...) {
     download.file("http://data.nhm.ac.uk/dataset/902f084d-ce3f-429f-a6a5-23162c73fdf7/resource/1e82548a-5f1e-4d32-861f-e00a740ea296/download/database.rds", "predicts.RDS")
@@ -398,6 +393,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy=NA)))
 }
 
+#Species values are numeric instead of integers.
 # Data of plant cover in 100m^2 plots from various years. Cover codes 1-9 represented percentage
 # - ranges within the data. The median percentages were taken for each of the cover codes and used
 # - as the quantity
@@ -427,7 +423,7 @@ clean.predicts <- function(data) {
     return(.df.melt(data$species,
                     data$plot_year,
                     data$cover,
-                    data.frame(units="area"),
+                    data.frame(units="unit.unit"),
                     data.frame(id=site.id, year, name, lat=NA, long=NA, address="Tallgrass Prairie Preserve in Osage County, Oklahoma, USA", area=NA),
                     data.frame(species=unique(data$species), taxonomy="plantae")))
 }
@@ -446,6 +442,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(data), taxonomy="Lepidoptera")))
 }
 
+#Species values are numeric instead of integers.
 #' @export
 .rodriguezBuritica.2013 <- function(...){
     data <- read.csv(suppdata("E094-083","SMCover.csv",from = "esa_archives"))
@@ -494,7 +491,7 @@ clean.predicts <- function(data) {
     year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
     name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
     return(.matrix.melt(comm,
-                        data.frame(units="area", treatment="grazing"),
+                        data.frame(units="unit.unit", treatment="grazing"),
                         data.frame(id=rownames(comm), year, name, lat=NA, long=NA, address="Santa Rita Experimental Range, Arizona, USA", area="1m2"),
                         data.frame(species=colnames(comm), taxonomy="Plantae")))
 }
@@ -577,9 +574,10 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformedData), taxonomy=NA)))
 }
 
+#Intermediate file is missing
 #' @export
 .heidi.2018 <- function(...) {
-    data <- read.xls("Heidi_Species_Cover_2017_Final_121817.xlsx", sheet=2, stringsAsFactors=FALSE)
+    data <- read.xls("Heidi_Species_Cover_2017_Final_121817.xlsx", 2, stringsAsFactors=FALSE)
     metadata <- read.xls("SiteSpeciesList_argon.xlsx", fileEncoding="latin1", stringsAsFactors=FALSE)
     data$geo <- metadata$Lat[match(data$Site, metadata$Site.Name)]
     data$lat <- NA
@@ -670,7 +668,7 @@ clean.predicts <- function(data) {
     species.data$X <- NULL
     species.data$site.year <- NULL
     return(.matrix.melt(as.matrix(species.data),
-                        data.frame(units="area"),
+                        data.frame(units="unit.unit"),
                         data.frame(id=rownames(species.data), year, name, lat, long, address=NA, area="cells/mL"),
                         data.frame(species=colnames(species.data), taxonomy="Chromista")))
 }
@@ -696,6 +694,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(transformed.data), taxonomy=NA)))
 }
 
+#Species values are numeric instead of integers.
 #' @importFrom reshape2 melt
 #' @export
 .boyle.2015 <- function(...) {
@@ -713,6 +712,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$ScientificName), taxonomy="Aves")))
 }
 
+#Species values are numeric instead of integers.
 #' @export
 .myster.2010 <- function(...){
     addr  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-luq/100/246250/f718e683c7c425207c7d1f7adeddf85f"
@@ -724,7 +724,7 @@ clean.predicts <- function(data) {
     year <- data$date[!duplicated(data$plot.year)]
     name <- data$plot[!duplicated(data$plot.year)]
     return(.df.melt(data$species, data$plot.year, data$percent.cover,
-                    data.frame(units="area"),
+                    data.frame(units="unit.unit"),
                     data.frame(id=site.id, year, name, lat="-65.8257", long="18.3382", address="Luquillo Experimental Forest, Puerto Rico, USA", area="2mX5m"),
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
 }
@@ -890,6 +890,7 @@ clean.predicts <- function(data) {
                         data.frame(species=colnames(tData), taxonomy="Plantae")))
 }
 
+#This function takes forever to run (I never actually got it to run. It "broke" my computer)
 #' @export
 .biotime.2018 <- function(...) {
     data <- read.csv(url("https://zenodo.org/record/1095628/files/BioTIMEQuery_06_12_2017.csv"))
@@ -923,6 +924,7 @@ clean.predicts <- function(data) {
     return(mapply(rbind, countData, paData))
 }
 
+#Species values are numeric instead of integers.
 #' @export
 .thibault.2011 <- function(...){
     abundance.data <- read.csv(suppdata("E092-201", "MCDB_communities.csv", from = "esa_data_archives"), as.is=TRUE)
@@ -952,7 +954,7 @@ clean.predicts <- function(data) {
                      data.frame(species=unique(abundance.data$species),taxonomy=NA)))
 }
 
-
+#Species values are numeric instead of integers.
 #' @export
 .collins.2018 <- function(...) {
     # The species in this dataset are not named; Generic identifiers are given (e.g. 'sp1')
@@ -980,6 +982,7 @@ clean.predicts <- function(data) {
                     data.frame(species=unique(data$species), taxonomy="Plantae")))
 }
 
+#Intermediate files are missing
 #' @export
 .franklin.2018 <- function(...) {
     data <- read.xls("CopyofWESTCOSPPCOVER.xlsx", as.is=TRUE)
@@ -1029,6 +1032,7 @@ clean.predicts <- function(data) {
 #    unlink(temp)
 #}
 
+#this functions is not finished
 .chamailleJammes.2016 <- function(...){
     data <- read.csv(suppdata("10.1371/journal.pone.0153639", 1), stringsAsFactors=FALSE)
     year <- (1992:2005)[-6] # Study excluded the year of 1997
@@ -1045,10 +1049,11 @@ clean.predicts <- function(data) {
                     data$WATERHOLE,
                     data$Count,
                     data.frame(units="#"),
-                    data.frame(id=, lat="18", long="26", address="Hwange National Park, Zimbabwe, Africa", area=NA),
+                    data.frame(id="", lat="18", long="26", address="Hwange National Park, Zimbabwe, Africa", area=NA),
                     data.frame(species=unique(data$species, taxonomy="Mammalia"))))
 }
 
+#this functions was not finished
 .coblentz.2015 <- function(...){
     # This won't work on Windows OS. I might be wrong but I think that it has
     # something to do with the spaces in the file name.
@@ -1079,7 +1084,7 @@ clean.predicts <- function(data) {
 }
 
 
-petermann.2016 <- function(...){
+.petermann.2016 <- function(...){
     data <- read.xls(suppdata("10.5061/dryad.9ts28", "Petermann16PLOSONE_data_for_dryad.xlsx"))
 
     comm <- as.matrix(data[,16:55])
@@ -1091,7 +1096,7 @@ petermann.2016 <- function(...){
                         data.frame(species=colnames(comm), taxonomy=NA)))
 }
 
-
+#Species are numeric not integers.
 #' @importFrom picante matrix2sample
 .matos.2017 <- function(...){
     usa <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"))[,-1])
@@ -1119,14 +1124,14 @@ petermann.2016 <- function(...){
                     data.frame(species=unique(data$id), taxonomy=NA)))
 }
 
-
+#There is an issue with differing numbers of rows  
 .russo.2015 <- function(...){
     species <- read.xls(suppdata("10.5061/dryad.6cr82", "DataforDryad_netmaludome.xlsx"), header=FALSE, as.is=TRUE, nrow=2)[2:1,]
     species <- unname(apply(as.matrix(species), 2, paste, collapse="_"))[-1]
 
     data <- read.xls(suppdata("10.5061/dryad.6cr82", "DataforDryad_netmaludome.xlsx"), as.is=TRUE, skip=3)
     comm <- as.matrix(data[,-1])
-    colnames(comm) <- species; rownames(comm) <- data[,1]
+    colnames(comm) <- species; rownames(comm) <- data[,1] # I think the `;` may be causing issues 
     return(.matrix.melt(comm,
                         data.frame(units="#"),
                         data.frame(id=rownames(comm), name=colnames(comm), year="2008-2013", lat=NA, long=NA, address=NA, area="New York state, USA"),
@@ -1134,6 +1139,7 @@ petermann.2016 <- function(...){
                         ))
 }
 
+#Something weird is going on inside here, but I'm not sure how to address it.  
 .mcmahon.2017 <- function(...){
     abun <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=da11cbc268d91fef78c78bd2813adbf6", header = TRUE)
     site_meta1 <- read.csv(file = "https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-ntl.349.2&entityid=a508f609c7d45f1c10604a4722acfd04", header = TRUE)
@@ -1145,8 +1151,8 @@ petermann.2016 <- function(...){
 
     data <- merge(org_meta, site_data, by = "OTU")
     comm <- with(data, tapply(value, list(paste(Lake,Collection_Date,sep="_", OTU), length)))
-    site.names <- sapply(strsplit(rownames(comm), "_"), function(x) x[1])
-    years <- sapply(strsplit(rownames(comm), "_"), function(x) x[2])
+    site.names <- sapply(strsplit(rownames(comm), "_"), function(x) x[1]) #This does not work
+    years <- sapply(strsplit(rownames(comm), "_"), function(x) x[2]) #This does not work
     comm[is.na(comm)] <- 0
     unique <- data[!duplicated(data$OTU),]
     colnames(unique)[1] <- 'Species'
@@ -1157,6 +1163,8 @@ petermann.2016 <- function(...){
                         data.frame(species=colnames(comm),taxonomy=unique, )))
 }
 
+#Species values are numeric not integers.
+#Species listed are not species.
 .hollibaugh.2017 <- function(...){
     data <- read.csv(file = "https://pasta.lternet.edu/package/data/eml/knb-lter-pal/114/2/3ab81d869107c4b3a7f0fb76fed55ed4", header = TRUE)
     names(data)[7:8] <- c("latitude","longitude")
@@ -1176,7 +1184,7 @@ petermann.2016 <- function(...){
                     species.metadata=data.frame(species=unique(taxon), taxonomy=NA)))
 }
 
-.mcknight.year <- function(...){
+.mcknight.1998 <- function(...){
     data <- read.csv(file="https://pasta.lternet.edu/package/data/eml/knb-lter-mcm/12/3/7f8537c0f0f80a255551ad61d9d512dc",header=TRUE)
 
     species <- unique(data$Species)
