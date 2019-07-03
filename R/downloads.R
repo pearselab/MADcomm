@@ -5,7 +5,6 @@
 #' @importFrom utils data head read.csv read.delim read.table
 #' @importFrom stats aggregate na.omit reshape
 #' @importFrom gdata drop.levels
-#' @importFrom testdat sanitize_text
 #' @importFrom readxl read_xlsx read_xls read_excel
 #' @importFrom neonUtilities loadByProduct
 #' @export
@@ -980,7 +979,7 @@ petermann.2016 <- function(...){
     eum <- as.matrix(read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 3)[,-1])
 
     lookup <- read.xls(suppdata("10.5061/dryad.86h2k", "PMATOS_DATA_DRYADES.xlsx"), 4, as.is=TRUE)
-    lookup$Species.name <- sanitize_text(lookup$Species.name)
+    lookup$Species.name <- .sanitize.text(lookup$Species.name)
     lookup$Species.name <- sapply(strsplit(lookup$Species.name, " "), function(x) paste(x[1:2], collapse="_"))
     lookup <- setNames(lookup$Species.name, lookup$Code)
 
@@ -1217,7 +1216,7 @@ petermann.2016 <- function(...){
     download.file("https://www.datadryad.org/bitstream/handle/10255/dryad.129944/BB_all_4_SimilMatrices_Dryad.xlsx?sequence=1", tmp.file)
     data <- read.xls(tmp.file, sheet=2)
     lookup <- read.xls(suppdata("10.5061/dryad.44bm6", "BB_all_4_SimilMatrices_Dryad.xlsx"), sheet=1, skip=5, header=FALSE, as.is=TRUE)[-1:-8,]
-    lookup[,2] <- sanitize_text(lookup[,2])  
+    lookup[,2] <- .sanitize.text(lookup[,2])  
     lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
     lookup <- setNames(lookup[,2], lookup[,1])
     names(data)[names(data) %in% names(lookup)] <- lookup[names(data)[names(data) %in% names(lookup)]]
@@ -1252,7 +1251,7 @@ if(FALSE){
     download.file("https://zenodo.org/record/1198846/files/template_MosquitoDataBrant77.xlsx", tmp.file)
     DailyHLC <- read.xls(tmp.file, sheet=4, as.is=TRUE, skip=9)
     lookup <- read.xls(tmp.file, sheet=3, as.is=TRUE)
-    lookup[,2] <- sanitize_text(lookup[,2])  
+    lookup[,2] <- .sanitize.text(lookup[,2])  
     #lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
     lookup <- setNames(lookup[,2], lookup[,1])
     names(DailyHLC) <- gsub("_count", "", names(DailyHLC), fixed=TRUE)

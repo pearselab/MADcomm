@@ -1,13 +1,18 @@
-Package: nacdb
+Package: MADcomm
 Type: Package
-Title: Not A Trait DataBase
-Version: 1.0
-Date: 2017-05-16
+Title: Make A Database of traits
+Version: 1.0-0
 Author: William D. Pearse, 
 Maintainer: William D. Pearse <will.pearse@usu.edu>
-Description: Downloads community presence/absence and abundance data
-    from published sources, and collates them into an easy-to-use
-    format for use within R.
+Description: Automates the download and assembly of ecological assemblage
+    data from published sources. This package is not a database, but
+    rather Makes A Database of communities from published, existing
+    sources. Those who have contributed community data that is downloaded
+    should, of course, be appropriately referenced when their data are
+    used (tools are available within this package to aid that). Some
+    basic data checking, and functions to perform data checking, are
+    included within this package, but the user should check their data
+    before serious use.
 License: MIT + file LICENSE
 Depends:
     R (>= 2.10)
@@ -20,6 +25,8 @@ Imports:
     httr (>= 1.2.1),
     taxize,
     readxl,
-    picante
+    picante,
+    neonUtilities,
+    assertthat
 RoxygenNote: 6.1.1
 Encoding: UTF-8

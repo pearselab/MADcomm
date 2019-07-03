@@ -1,7 +1,7 @@
-clean.nacdb <- function(x){
+clean.MADcomm <- function(x){
     # Argument handling
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
 
     # Clean up any obvious weirdnesses with the site names
 
@@ -15,12 +15,12 @@ clean.nacdb <- function(x){
 # require the addition of some sort of cache, as there will be
 # *thousands* of species names that need adding in here
 #' @importFrom taxize gnr_resolve
-clean.nacdb.names <- function(x, thresh, ...){
+clean.MADcomm.names <- function(x, thresh, ...){
     # Argument handling
     if(!inherits(x, "natdb"))
         stop("'", deparse(substitute(x)), "' must be of type 'natdb'")
 
-    # This code doesn't work on a nacdb object, probably, but the general structure will
+    # This code doesn't work on a MADcomm object, probably, but the general structure will
     spp <- unique(c(unique(x$numeric$species), unique(x$categorical$species)))
     dwn.spp <- gnr_resolve(spp)
     dwn.spp <- dwn.spp[!duplicated(dwn.spp$user_supplied_name),]

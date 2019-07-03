@@ -1,6 +1,6 @@
-#' Builds a community database
+#' Make A Database of community data
 #'
-#' The key function of the nacdb package. When run with defaults, it
+#' The key function of the MADcomm package. When run with defaults, it
 #' will download and build a database of species' traits from all the
 #' manuscript sources in the package. This totals XXX
 #' manuscripts/databases, XXX species, and XXX traits. Please note
@@ -20,24 +20,24 @@
 #' @param cache Folder where cached downloads are stored
 #' @param delay How long to wait between downloads (to save server
 #'     overload); default is 5 seconds.
-#' @return nacdb.data object. XXX
+#' @return MADcomm.data object. XXX
 #' @author Will Pearse; Bodie; etc.
 #' #@examples
 #' # Limit the scope of these as they have to work online on servers!...
 #' #@seealso 
 #' @export
 #' @importFrom gdata ls.funs
-nacdb <- function(cache, datasets, delay=5){
+MADcomm <- function(cache, datasets, delay=5){
     #Check datasets
     if(missing(datasets)){
-        datasets <- Filter(Negate(is.function), ls(pattern="^\\.[a-z]*\\.[0-9]+", name="package:nacdb", all.names=TRUE))
+        datasets <- Filter(Negate(is.function), ls(pattern="^\\.[a-z]*\\.[0-9]+", name="package:MADcomm", all.names=TRUE))
     } else {
         datasets <- paste0(".", tolower(datasets))
         datasets <- gsub("..", ".", datasets, fixed=TRUE)
     }
     if(!all(datasets %in% datasets)){
         missing <- setdiff(datasets, ls.funs())
-        stop("Error: ", paste(missing, collapse=", "), "not in nacdb")
+        stop("Error: ", paste(missing, collapse=", "), "not in MADcomm")
     }
     
     #Do data loads
@@ -79,14 +79,14 @@ nacdb <- function(cache, datasets, delay=5){
         site.metadata=do.call(rbind, lapply(output, function(x) x$site.metadata)),
         study.metadata=do.call(rbind, lapply(output, function(x) x$study.metadata))
     )
-    class(output) <- "nacdb"
+    class(output) <- "MADcomm"
     return(output)
 }
 
-print.nacdb <- function(x, ...){
+print.MADcomm <- function(x, ...){
     # Argument handling
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
     
     # Create a simple summary matrix of species and sites in x
     n.species <- length(unique(species(x)))
@@ -98,14 +98,14 @@ print.nacdb <- function(x, ...){
     invisible(setNames(c(n.species,n.sites), c("n.species","n.sites")))
 }
 
-summary.nacdb <- function(x, ...){
-    print.nacdb(x, ...)
+summary.MADcomm <- function(x, ...){
+    print.MADcomm(x, ...)
 }
 
-"[.nacdb" <- function(x, sites, spp){
+"[.MADcomm" <- function(x, sites, spp){
     # Argument handling
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
 
     # Setup null output in case of no match
     null <- list(
@@ -114,7 +114,7 @@ summary.nacdb <- function(x, ...){
         site.metadata=data.frame(id=NA,year=NA,name=NA,lat=NA,long=NA,address=NA,other=NA),
         spp.metadata=data.frame(species=NA, taxonomy=NA, other=NA)
     )
-    class(null) <- "nacdb"
+    class(null) <- "MADcomm"
 
     # Site subsetting
     if(!missing(sites)){
@@ -145,38 +145,38 @@ summary.nacdb <- function(x, ...){
 }
 
 species <- function(x, ...){
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
     return(unique(x$spp.metadata$species))
-    # Return a vector of the sites in nacdb (?)
+    # Return a vector of the sites in MADcomm (?)
 }
 
 sites <- function(x, ...){
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
     return(unique(x$site.metadata$id))
 }
 
 citations <- function(x){
-    if(!inherits(x, "nacdb"))
-        stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+    if(!inherits(x, "MADcomm"))
+        stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
     
-    data(nacdb_citations)
-    datasets <- Filter(Negate(is.function), ls(pattern="^\\.[a-z]*\\.[0-9]+[a-d]?", name="package:nacdb", all.names=TRUE))
-    nacdb.citations$Name <- with(nacdb.citations, paste0(".", tolower(Author), ".", Year))
+    data(MADcomm_citations)
+    datasets <- Filter(Negate(is.function), ls(pattern="^\\.[a-z]*\\.[0-9]+[a-d]?", name="package:MADcomm", all.names=TRUE))
+    MADcomm.citations$Name <- with(MADcomm.citations, paste0(".", tolower(Author), ".", Year))
 
-    return(as.character(nacdb.citations$BibTeX.citation[match(datasets, nacdb.citations$Name)]))
+    return(as.character(MADcomm.citations$BibTeX.citation[match(datasets, MADcomm.citations$Name)]))
 }
 
 # I added this during ARGON, and while it's useful I think I need to
 # think a little more coherently abotu how to let users interact with
 # study-level meta-data
 if(FALSE){
-    #' @method subset nacdb
+    #' @method subset MADcomm
     #' @export
     subset.study <- function(x, studies, ...){
-        if(!inherits(x, "nacdb"))
-            stop("'", deparse(substitute(x)), "' must be of type 'nacdb'")
+        if(!inherits(x, "MADcomm"))
+            stop("'", deparse(substitute(x)), "' must be of type 'MADcomm'")
 
         x$data <- x$data[x$data$study %in% studies,]
         x$spp.metadata <- x$spp.metadata[x$spp.metadata$study %in% studies,]
