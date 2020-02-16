@@ -16,6 +16,10 @@ Description: Automates the download and assembly of ecological assemblage
 License: MIT + file LICENSE
 Depends:
     R (>= 2.10)
+Suggests: 
+    testthat (>= 2.0.0),
+    covr (>= 3.0.1),
+    knitr (>= 1.6)
 Imports:
     suppdata,
     gdata (>= 2.17.0),
