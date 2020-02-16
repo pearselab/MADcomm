@@ -7,6 +7,9 @@
 #' @importFrom gdata drop.levels
 #' @importFrom readxl read_xlsx read_xls read_excel
 #' @importFrom neonUtilities loadByProduct
+#' @importFrom bit64 as.integer64
+#' @importFrom data.table data.table rbindlist fread
+#' @importFrom stringr str_extract
 #' @export
 .adler.2007 <- function(...){
     data <- read.csv(suppdata("E088-161", "allrecords.csv", from = "esa_archives"))
@@ -1245,31 +1248,6 @@ petermann.2016 <- function(...){
                         species.meta))
 }
 
-if(FALSE){
-.brant.2018 <- function(...){
-    tmp.file <- tempfile()
-    download.file("https://zenodo.org/record/1198846/files/template_MosquitoDataBrant77.xlsx", tmp.file)
-    DailyHLC <- read.xls(tmp.file, sheet=4, as.is=TRUE, skip=9)
-    lookup <- read.xls(tmp.file, sheet=3, as.is=TRUE)
-    lookup[,2] <- .sanitize.text(lookup[,2])  
-    #lookup[,2] <- sapply(strsplit(lookup[,2], " "), function(x) paste(x[1:2],collapse="_"))
-    lookup <- setNames(lookup[,2], lookup[,1])
-    names(DailyHLC) <- gsub("_count", "", names(DailyHLC), fixed=TRUE)
-    names(lookup) <- gsub(".", "_", names(lookup), fixed=TRUE)
-    names(DailyHLC)[names(DailyHLC) %in% names(lookup)] <- lookup[names(DailyHLC)[names(DailyHLC) %in% names(lookup)]]
-    DailyHLC$site_year <- with(DailyHLC, paste(field_name, Location, Date, sep="_"))
-    #community matrix
-    comm <- as.matrix(DailyHLC[,c(-1:-7,-ncol(DailyHLC))])
-    rownames(comm) <- DailyHLC$site_year
-    site.metadata <- DailyHLC[,1:7]
-    species.meta <- data.frame(species=colnames(comm), taxonomy="Insecta")
-    return(.matrix.melt(comm,
-                        data.frame(units="#"),
-                        data.frame(id=DailyHLC$site_year, name=site.metadata$Location, year=site.metadata$Date, lat="4.6353 to 4.9654", long="116.9542 to 117.8004", address="SAFE project, Borneo", area="attracted to humans"),
-                        species.meta))
-}
-}
-
 .truxa.2015 <- function(...){
     data <- as.data.frame(read_xlsx(suppdata("10.5061/dryad.fg8f6/1", "Appendix_3.xlsx"), skip=1)) #use skip to skip any rows that you don't want/aren't useful
     comm <- data[,-1:-3] #get rid of columns you don't want
@@ -1710,351 +1688,7 @@ if(FALSE){
 
 }
 
-################################
-# NEED FIXING ##################
-################################
-if(FALSE){
-    .lightfoot.2016 <- function(...) {
-        data <- read.table("http://sev.lternet.edu/sites/default/files/data/sev-106/sev106_hopperdynamics_20150826.txt", header=T, sep=",")
-        data$month.year <- format(as.Date(data$DATE, format="%m/%d/%Y"),"%m/%Y")
-        spec_codes <- c("ACPI","AGDE","AMCO","ARCO","ARPS","AUEL","AUFE","BOAR",
-                        "BRMA","CIPA","COCR","COOC","COTE","DABI","ERSI","HATR",
-                        "HERU","HEVI","HICA","LAAZ","LEWH","MEAR","MEAZ","MEBO",
-                        "MEGL","MELA","MEOC","METE","OPOB","PAPA","PHQU","PHRO",
-                        "PSDE","PSTE","SCNI","SYMO","TRCA","TRFO","TRKI","TRPA",
-                        "TRPI","XACO","XAMO")
-        species <- c("Acantherus piperatus","Ageneotettix deorum",
-                     "Amphitornus coloradus","Arphia conspersa",
-                     "Arphia pseudonietana","Aulocara elliotti",
-                     "Aulocara femoratum","Bootettix argentatus",
-                     "Brachystola magna","Cibolacris parviceps",
-                     "Cordillacris crenulata","Cordillacris occipitalis",
-                     "Conozoa texana","Dactylotum bicolor",
-                     "Eritettix simplex","Hadtrotettix trifasciatus",
-                     "Heliaula rufa","Hesperotettix viridis",
-                     "Hippopedon capito","Lactista azteca","Leprus wheeleri",
-                     "Melanoplus aridus","Melanoplus arizonae",
-                     "Melanoplus bowditchi","Melanoplus gladstoni",
-                     "Melanoplus lakinus","Melanoplus occidentalis",
-                     "Mermeria texana","Opeia obscura","Paropomala pallida",
-                     "Phlibostroma quadrimaculatum","Phrynotettix robustus",
-                     "Psoloessa delicatula","Psoloessa texana",
-                     "Schistocerca nitens","Syrbula montezuma",
-                     "Trimerotropis californicus","Tropidolophus formosus",
-                     "Trachyrhachis kiowa","Trimerotropis pallidipennis",
-                     "Trimerotropis pistrinaria","Xanthippus corallipes",
-                     "Xanthippus montanus")
-        metadata <- data.frame(spec_codes, species)
-        data$SPECIES <- metadata$species[match(data$SPECIES, metadata$spec_codes)]
-        data <- with(data, tapply(CNT, list(site_year, SPECIES), sum, na.rm=TRUE))
-        data$site_year <- with(data, paste(SITE, year, sep="_"))
-        temp <- strsplit(rownames(data), "_")
-        year <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,2]
-        year <- format(as.Date(data$DATE, format="%m/%Y"),"%Y")
-        name <- matrix(unlist(temp), ncol=2, byrow=TRUE)[,1]
-        #needs some "burned" info?...
-        return(.df.melt(data$species, data$SITE, data$CNT,
-                        data.frame(units="#"),
-                        data.frame(id=unique(data$plot_year), year, name, lat=NA, long=NA, address="Sevilleta National Wildlife Refuge, New Mexico", area=NA),
-                        data.frame(species=unique(data$species), taxonomy="Orthoptera")))
-    }
-
-    .fia.2018 <- function(...){
-      .get.fia <- function(state, var, select){
-        t.zip <- tempfile()
-        download.file(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state,"_",var,".zip"), t.zip)
-        unzip(t.zip)
-        data <- fread(paste0(state,"_",var,".csv"), select=select)
-        unlink(paste0(state,"_",var,".csv"))
-        return(data)
-      }
-      
-      states <- c("AK","AL","AZ","AR","CA","CO","CT","DE","FL","GA","HI","IA","ID","IL","IN","KS","KY","LA","ME","MD",
-                    "MA","MI","MN","MS","MO","MT","NC","NE","NH","NV","NM","NJ","NY","ND","OH","OK","OR","PA","RI",
-                    "SC","SD","TN","TX","UT","VA","VT","WA","WI","WV","WY","VI","PR")
-      data <- vector("list", length(states))
-      
-      for(i in seq_along(states)){
-        #Download/read in data
-        tree <- .get.fia(states[i], "TREE", c("CN","PLT_CN","PLOT","SPCD","DIA","INVYR"))
-        cond <- .get.fia(states[i], "COND", c("PLT_CN","PLOT","STDAGE","FORTYPCD","CONDID"))
-        plot <- .get.fia(states[i], "PLOT", c("PLOT","LAT","LON","ELEV", "CN"))
-        
-        #Subset everything, remove sites with multiple/ambiguous codings, merge
-        tree <- tree[tree$DIA > 1.96,]
-        cond <- cond[cond$PLT_CN %in% as.integer64(names(Filter(function(x) x==1, table(cond$PLT_CN)))),]
-        data[[i]] <- merge(tree, merge(cond, plot, by.x="PLT_CN", by.y="CN"), by.x="PLT_CN", by.y="PLT_CN")
-        data[[i]]$state <- states[i]
-      }
-      
-      data <- rbindlist(data)
-      t <- setNames(seq_along(unique(data$PLT_CN)), unique(data$PLT_CN))
-      data$site.id <- paste0(data$state, "_", t[as.character(data$PLT_CN)])
-      uniq.site <- as.data.frame(unique(data[, 15:16]))
-      sample.sites <- as.data.frame(uniq.site %>% group_by(state) %>% sample_n(size = 30))
-      data <- merge(sample.sites, data, by="site.id")
-      data$site.id <- paste0(data$site.id, "_", data$INVYR)
-      
-      fia.spp <- read.csv("FIA_SppList.csv") #currently in raw_data folder
-      fia.spp <- data.table(fia.spp$SPCD, paste0(fia.spp$GENUS, "_", fia.spp$SPECIES))
-      
-      data <- merge(data, fia.spp, by.x="SPCD", by.y="V1")
-      data <- data.frame(data$V2, data$site.id, data$LAT, data$LON, data$ELEV, 
-                         data$STDAGE, data$FORTYPCD, data$CONDID, data$DIA)
-      
-      names(data) <- c("species", "site.id", "lat", "long", "elev", "stdage", "forestclass", "condclass", "diameter")
-      comm <- t(as.matrix(with(data, table(species,site.id))))
-      dia <- aggregate(diameter~species, data, mean)
-      dia.count <- aggregate(diameter~species, data, length)
-      dia$diameter.n <- dia.count$diameter
-      
-      site.df <- data[!duplicated(data$site.id),]
-      site.df <- site.df[,2:8]
-      sites <- rownames(comm)
-      site.df <- site.df[match(sites, site.df$site.id), ]
-      
-      return(.matrix.melt(comm, 
-                          data.frame(units="#"), 
-                          data.frame(id=site.df$site.id, name=NA, year=NA, lat=site.df$lat,
-                                     long=site.df$long, address=NA, area=NA,
-                                     elevation=site.df$elev, class=site.df$forestclass),
-                          data.frame(species=dia$species, taxonomy=NA, diameter=dia$diameter)))  
-      
-    }
-    
-
-    .tomasovych.2010a <- function(...){
-        species <- read.xls(suppdata("10.5061/dryad.1225", "abundances-S California 1975.xls"), skip=1, header=TRUE)
-        species.clean <- species[,-1]
-        comm <- t(as.matrix(species.clean))
-        rownames(comm) <- species$X
-        rownames(comm)
-    }
-
-    .mendonca.2018 <- function(...){
-        # need to fix the years
-        tmp <- tempfile()
-        download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp)
-        data <- read.csv(.unzip("CERRADO_SM_Capture.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
-        data <- data[!is.na(data$Individuals_captured),]
-        data$Year_finsh <- as.numeric(data$Year_finish)
-        data <- data[!is.na(data$Year_finish),]
-        ids <- paste(data$id, data$Year_finish)
-        #ids <- ids[-c(1513:1536)]
-        # lat/long data
-        tmp2 <- tempfile()
-        download.file("https://esajournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fecy.2367&attachmentId=2208200269", tmp2)
-        ll_data <- read.csv(.unzip("CERRADO_SM_Study_Site.csv", tmp), as.is=TRUE, fileEncoding = "Latin1")
-        ll_data <- ll_data[,c(1,7,8)]
-        ll_data$id <- unique(ids)
-        names(ll_data) <- c("id", "lat", "long")
-        ll_data$year <- ll_data$id; ll_data$name <- ll_data$id
-        ll_data$address <- "Cerrado ecosystem: Brazil, Boliva, Paraguay"; ll_data$area <- "live_trap"
-        return(.df.melt(data$Actual_species_name,
-                        ids,
-                        data$Individuals_captured,
-                        data.frame(units = "#"),
-                        ll_data,
-                        data.frame(species = unique(data$Actual_species_name), taxonomy = "Animalia")
-                        )
-               )
-    }
-
-    # Error in data.frame(id = rownames(data), year = years, name =
-    # names, lat = NA, : arguments imply differing number of rows: 20,
-    # 24, 1
-    .sepulveda.2016 <- function(...){
-        tmp <- tempfile()
-        download.file("http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0157910.s001", tmp)
-        data <- read.xls(tmp, 1, skip=1, fileEncoding="Latin1")
-        data <- data[1:20,]
-        years <- colnames(data)[2:25]
-        names(data) <- c("species", paste(rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4), names(data)[2:25], sep="_"))
-        d2 <- t(data)
-        names <- rep(c("Cocholgue", "Hualpen", "Llico", "Mehuin", "La Mision", "Maicolpue"),each=4)
-        return(.matrix.melt(data,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = years, name= names, lat= NA, long= NA, address="Southwestern Chilean coast", area = NA), 
-                            data.frame(species=colnames(data), taxonomy = NA)
-                            )	       
-               )
-    }
-
-    # Metadata woes
-    .bried.2017  <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.151171/Dryad.data.xlsx?sequence=1", tmp)
-        data <- read.xls(tmp, 1)
-        n <- paste(data$Latitude, data$Longitude, sep = "_")
-        comm <- data[,-c(1:4)]
-        comm$Region <- n
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2017, name = , lat= , long = , address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Insecta")
-                            )
-               )
-    }
-
-    # datasets on chiclids - each function downloads a community
-    # dataset for a different region
-    # Kigoma town
-    .britton.2017.a <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148126/BrittonEtAl2017_KigomaTown.csv?sequence=3", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]	
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-    # Kigoma deforested
-    .britton.2017.b <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148127/BrittonEtAl2017_KigomaDeforested.csv?sequence=3", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-    # Kalilani village
-    .britton.2017.c <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148128/BrittonEtAl2017_KalilaniVillage.csv?sequence=1", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-    # Jakobsen's beach
-    .britton.2017.d <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148129/BrittonEtAl2017_Jakobsen%27sBeach.csv?sequence=3", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-    # Gombe stream
-    .britton.2017.e <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148130/BrittonEtAl2017_GombeNP.csv?sequence=1", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-
-    # Mahale mountain 1
-    .britton.2017.f <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148131/BrittonEtAl2017_MahaleNPS1.csv?sequence=1", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-    # Mahale mountain 2
-    .britton.2017.g <- function(...){
-        tmp <- tempfile()
-        download.file("https://datadryad.org/bitstream/handle/10255/dryad.148132/BrittonEtAl2017_MahaleNPS2.csv?sequence=3", tmp)
-        data <- read.csv(tmp, skip=1)
-        data <- data[-c(1,2),]
-        names(data)[1] <- "species"
-        comm <- t(data)
-        return(.matrix.melt(comm,
-                            data.frame(units = "#"),
-                            data.frame(id = rownames(data), year = 2016, name = , lat = NA, long = NA, address = "", area = NA),
-                            data.frame(species = colnames(data), taxonomy = "Chiclidae")
-                            ))
-    }
-
-    .drew.2015<-function(...){
-        expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.93108/Supplemental%201.csv?sequence=1",as.is = TRUE)
-        expdata$binom<-paste(expdata$Genus,expdata$species,sep=".")
-        
-        comm<-t(expdata[,4:6])
-        colnames(comm)<-expdata$binom
-        
-        #meta data is basically not a thing, so this may need to be scrapped after all
-        
-        return(.matrix.melt(comm,
-                            data.frame(units="p/a"),
-                            sitedata,
-                            data.frame(speccies=expdata$binom,taxonomy=NA)
-                            )
-               )
-    }
-
-    .osuri.2016<-function(...){
-        expdata<-read.csv("https://datadryad.org/bitstream/handle/10255/dryad.109139/Osuri_Sanakran_2016_JAE_plot_data.csv?sequence=2",as.is = TRUE)
-
-        comm <- with(expdata, tapply(species, list(species, site.name), length))
-        comm[is.na(comm)] <- 0
-        comm<-t(comm)
-        
-        #meta data is limited, what could be easily found is in the expdata  data frame
-        
-        return(.matrix.melt(comm,
-                            data.frame(units="#"),
-                            sitedata,
-                            data.frame(species=expdata$species,taxonomy=NA)
-                            )
-               )
-    }
-
-    .helmus.2013 <- function(...){
-        library(pez) # This isn't how we declare packages in 'real'
-        # packages for the time being this is sufficient
-        data(laja)
-        return(.matrix.melt(invert.sites))
-    }
-
-    .jain.2017 <- function(...){
-        species <- read.xls(suppdata("10.5061/dryad.177q4", "Jain_etal_2016_Butterfly%20abundance%20across%20sites_22Dec2016.xlsx"), skip=5, header=TRUE, as.is=TRUE)
-        species.clean <- species[,c(-1:-15,-38)]
-        comm <- t(as.matrix(species.clean))
-        colnames(comm) <- species$Scientific.name
-        return(.matrix.melt(comm,
-                            data.frame(units="#", treatment=NA),
-                            data.frame(id=rownames(comm), year=site.metadata$Date, name=site.metadata$SiteCombo, lat=NA, long=NA, address = "British Columbia", area=site.metadata$HaSurveyed),
-                            data.frame(species=colnames(comm), taxonomy=NA)))
-    }
-
-
-}
-
-
-
+#' @export
 .fia.2018 <- function(...){
   .get.fia <- function(state, var, select){
     t.zip <- tempfile()
@@ -2194,9 +1828,9 @@ if(FALSE){
   name <- data[1,2]
   name <- gsub(' ','_',name)
   lat <- data[1,4]
-  lat <- as.numeric(gsub("°", "", lat, fixed = TRUE))
+  lat <- as.numeric(gsub("\u00B0", "", lat, fixed = TRUE))
   lon <- data[1,5]
-  lon <- as.numeric(gsub("°", "", lon, fixed = TRUE))
+  lon <- as.numeric(gsub("\u00B0", "", lon, fixed = TRUE))
   
   if(dfnum==1){ 
     data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=4)[,2]
@@ -2293,9 +1927,9 @@ if(FALSE){
   name <- data[1,2]
   name <- gsub(' ','_',name)
   lat <- data[1,4]
-  lat <- as.numeric(gsub("°", "", lat, fixed = TRUE))
+  lat <- as.numeric(gsub("\u00B0", "", lat, fixed = TRUE))
   lon <- data[1,5]
-  lon <- as.numeric(gsub("°", "", lon, fixed = TRUE))
+  lon <- as.numeric(gsub("\u00B0", "", lon, fixed = TRUE))
   data <- read.xls(link, as.is=TRUE, fileEncoding="latin1", skip=6)[,2]
   data <- gsub("[^[:alnum:][:space:]]","",data)
   data <- gsub(' ','_',data)

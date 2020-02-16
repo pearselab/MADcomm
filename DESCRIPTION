@@ -18,15 +18,16 @@ Depends:
     R (>= 2.10)
 Imports:
     suppdata,
-    nneo,
-    testdat (>= 0.2-0),
     gdata (>= 2.17.0),
     reshape2 (>= 1.4.2),
     httr (>= 1.2.1),
-    taxize,
-    readxl,
-    picante,
-    neonUtilities,
-    assertthat
+    taxize (>= 0.9.7),
+    readxl (>= 1.3.1),
+    picante (>= 1.8),
+    neonUtilities (>= 1.2.2),
+    assertthat (>= 0.2.1),
+    bit64 (>= 0.9-7),
+    data.table (>= 1.12.2),
+    stringr (>= 1.3.0)
 RoxygenNote: 6.1.1
 Encoding: UTF-8
